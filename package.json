@@ -1,0 +1,22 @@
+{
+  "name": "proyecto1",
+  "version": "1.0.0",
+  "main": "cucumber.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "@playwright/test": "^1.51.0",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@cucumber/pretty-formatter": "^1.0.1"
+  }
+}

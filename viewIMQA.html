@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA IntraMed</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .user-img { width: 40px; height: 40px; border-radius: 50%; }
+        .report { width: 100%; background-color: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; }
+        .file-list { height: 200px; overflow-y: scroll; padding: 5px; text-align: left; }
+        .buttons { height: 200px; overflow-y: scroll; }
+        .col-5, .col-1 { margin-right: -15px; }
+        .colorIM { color: #0909a5; }
+        .search-box { width: 100%; padding: 5px; border: 1px solid #dee2e6; background-color: #f8f9fa; }
+
+        .btn-light {
+            background-color: #f0f8ff !important;
+            border-color: #b5dbfc !important;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-3 mt-1" id="encabezado">
+            <div class="col">
+                <img src="./logo_intramed 2.png" style="width: 170px;" alt="Logo" class="logo-img">
+            </div>
+            <div class="col text-right">
+                <button class="btn btn-secondary btn-sm">Login</button>
+            </div>
+        </div>
+
+        <!-- Nuevo row para búsqueda optimizado -->
+        <div class="row mb-3" id="busqueda">
+            <div class="col">
+                <div class="d-flex align-items-center search-box">
+                    <!-- Bloque de búsqueda -->
+                    <label for="searchInput" class="mb-0 mr-2">Búsqueda:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" style="width: 80px;" placeholder="Buscar">
+                    <button class="btn btn-secondary btn-sm ml-2" id="searchButton">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Bloque de categoría -->
+                    <label for="categorySelect" class="mb-0 ml-3 mr-2">Categoría:</label>
+                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;">
+                        <option value="1">Opción 1</option>
+                        <option value="2">Opción 2</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm ml-2" id="categoryButton">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Bloque de entorno -->
+                    <label for="environmentSelect" class="mb-0 ml-3 mr-2" >Entorno:</label>
+                    <select id="environmentSelect" class="form-control form-control-sm" style="width: 140px;">
+                        <option value="prod_actual" selected>Prod. actual</option>
+                        <option value="qa_actual">QA actual</option>
+                        <option value="prod_red_social">Prod. Red social</option>
+                        <option value="qa_red_social">QA Red social</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm ml-2" id="environmentButton">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Bloque de versión -->
+                    <label for="selVerc" class="mb-0 ml-3 mr-2">versión:</label>
+                    <select id="selVerc" class="form-control form-control-sm" style="width: 100px;">
+                        <option value="prod_actual" selected>2.7</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm ml-2" id="environmentButton">
+                        <i class="fa fa-refresh" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm ml-1" id="environmentButton">
+                        <i class="fa fa-info" aria-hidden="true"></i>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="row mb-3" id="columnas">
+            <div class="col-5">
+                <div class="file-list bg-light border" id="fileList">
+                    <div>Archivo 1</div>
+                    <div>Archivo 2</div>
+                    <div>Archivo 3</div>
+                </div>
+            </div>
+            <div class="col-1 text-center">
+                <div class="d-flex flex-column">
+                    <button class="btn btn-primary btn-sm mb-1">
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm mb-1">
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm mb-1">
+                        <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-5">
+                <div class="file-list bg-light border">
+                    <div>Archivo A</div>
+                    <div>Archivo B</div>
+                    <div>Archivo C</div>
+                </div>
+            </div>
+            <div class="col-1 text-center">
+                <div class="d-flex flex-column">
+                    <button class="btn btn-success btn-sm mb-1" onclick="ejecutarTests();">Ejecutar</button>
+                    <button class="btn btn-warning btn-sm mb-1">Pausa</button>
+                    <button class="btn btn-danger btn-sm mb-1">Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col ">
+                <div class="report" id="report"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var idFeatureSelG = '';
+        // Función para actualizar el listado de archivos
+        function changeEntorno() {
+            // Obtenemos el entorno y la versión seleccionados
+            var env = $("#environmentSelect").val();
+            
+            // Obtenemos la versión; si el valor es "0", significa que no se ha seleccionado una versión específica y usaremos Base.
+            var version = $("#versionSelect").val();
+            
+            // Preparamos los datos a enviar en la petición
+            var postData = { env: env };
+            if (version && version !== "0") {
+                postData.version = version;
+            }
+            
+            // Enviamos la petición POST al endpoint /list-files del backend
+            $.ajax({
+               url: "http://localhost:3000/list-files",
+               type: "POST",
+               contentType: "application/json",
+               data: JSON.stringify(postData),
+               success: function(response) {
+                    // Limpiamos el contenedor de archivos y lo actualizamos con la lista recibida
+                    $("#fileList").empty();
+                    var classItems = 'allItem0';
+                    var color = '#ddedff';
+                    var colorOver = '#cae4ff';
+                    for(var i=0; i< response.test.length; i++){
+                        var idEl = 'item0-'+i;
+                        var item = response.test[i];
+                        $("#fileList").append('<div class="'+classItems+'" id="'+idEl+'" style="cursor:pointer; width:100%; background-color:'+color+'; padding-left:2px; margin-bottom:3px;" onmouseover="overElementItem(\''+idEl+'\', \''+classItems+'\', \''+color+'\', \''+colorOver+'\');" onmouseout="outElementItem(\''+classItems+'\', \''+color+'\')">' + item + 
+                        '<button class="btn btn-light btn-sm ml-2" style=" height:24px; width:22px; padding:0px; float:right;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+
+                    }
+                    var strHtml = '';
+                    response.versiones.forEach(function(vercion) {
+                        strHtml+='<option value="'+vercion+'">'+vercion+'</option>';
+                    });
+                    $("#selVerc").html(strHtml);
+                },
+               error: function(xhr, status, error) {
+                    console.error("Error al obtener el listado de archivos:", error);
+               }
+            });
+        }
+
+
+        // Ejecutamos changeEntorno cuando la página carga y asignamos al evento change del select de entorno
+        $(document).ready(function() {
+            changeEntorno(); // Actualizar al iniciar
+            $("#environmentSelect").on("change", changeEntorno);
+            $("#versionSelect").on("change", changeEntorno);
+
+        });
+
+
+        //--FUNCIONES VARIAS--//
+        function overElementItem(idEl, classItems, color, newColor ){
+            $('.'+classItems).css('background-color',color);
+            $('#'+idEl).css('background-color',newColor);
+            if(idFeatureSelG != ''){
+
+            }
+
+        }
+        function outElementItem(classItems, color){
+            $('.'+classItems).css('background-color',color);
+        }
+
+        function selecFeature(idFeature){
+            idFeatureSelG = idFeature;
+           // background-color: #f0f8ff !important;
+           // border-color: #b5dbfc !important;
+
+        }
+        function obtenerFeature(idFeature) {
+
+            
+        }
+
+
+      </script>
+
+</body>
+</html>
+

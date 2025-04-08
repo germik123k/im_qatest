@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA IntraMed</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .user-img { width: 40px; height: 40px; border-radius: 50%; }
+        .report { width: 100%; background-color: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; }
+        .file-list { height: 200px; overflow-y: scroll; padding: 5px; text-align: left; }
+        .buttons { height: 200px; overflow-y: scroll; }
+        .col-5, .col-1 { margin-right: -15px; }
+        .colorIM { color: #0909a5; } /* Estilo corregido */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-3 mt-5">
+      
+            <div class="col ">
+                    <button class="btn btn-secondary btn-sm" onclick="generarDataTest()">
+                        test compresor
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="test2();">
+                        comprimir
+                    </button>
+            </div>
+        </div>
+
+      
+
+        
+    </div>
+
+    <script>
+     // Variables globales para almacenar los datos
+    var dataOriginal = [];
+    var dataStringOriginal = "";
+
+    // Función para generar la semilla de datos
+    function creacionsemilladatos(largoData, cantCadenas) {
+        dataOriginal = []; // Reiniciar el array
+        for (let i = 0; i < cantCadenas; i++) {
+            let numeroAleatorio = "";
+            for (let j = 0; j < largoData; j++) {
+                numeroAleatorio += Math.floor(Math.random() * 10); // Genera un dígito decimal aleatorio (0-9)
+            }
+            dataOriginal.push(numeroAleatorio);
+        }
+        dataStringOriginal = dataOriginal.join(""); // Unir todas las cadenas en una sola sin separador
+    }
+
+    // Llamar a la función al cargar la ventana
+    window.onload = function() {
+        creacionsemilladatos(9, 20);
+        console.log("Array de datos originales:", dataOriginal);
+        console.log("Cadena completa sin separador:", dataStringOriginal);
+    };
+
+    
+        
+/*
+
+  
+
+xxxx 
+comando
+
+x
+parametros de comando
+
+
+
+
+
+*/
+
+
+    </script>
+    
+
+
+
+</body>
+</html>
+
+
