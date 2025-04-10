@@ -1,5 +1,3 @@
-
-
 Feature: Login
 
 Scenario: Hacer login en Intramed

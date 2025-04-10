@@ -16,7 +16,7 @@ app.post('/run-tests', (req, res) => {
     files.forEach(file => {
         fs.writeFileSync('params.json', JSON.stringify(file.params));
         const command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
-/*
+
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error ejecutando ${file.nameFile}:`, error);
@@ -31,13 +31,13 @@ app.post('/run-tests', (req, res) => {
             console.log(`Resultado de ${file.nameFile}:`, stdout);
             res.send(`Resultado de ${file.nameFile}: ${stdout}`);
         });
-        */
+        
     });
 });
 
 // Nuevo endpoint para listar archivos en la carpeta de features
 app.post('/list-files', (req, res) => {
-    console.log('entro ok');
+
     const env = req.body.env || 'prod_actual';
     const version = req.body.version ? req.body.version : 'Base';
     
@@ -90,6 +90,34 @@ app.post('/list-files', (req, res) => {
                 res.status(500).send({ error: "Error obteniendo directorios" });
             });
     });
+});
+
+
+app.post('/read-file-feature', (req, res) => {
+    const fileName = req.body.fileName;
+    const env = req.body.env || 'defaultEnv';
+    const version = req.body.version || 'Base';
+
+    if (!fileName) {
+        return res.status(400).json({ error: "Falta el nombre del archivo" });
+    }
+
+    try {
+        const dirPath = path.join(__dirname, 'tests', env, version, 'features', fileName);
+
+        // Validamos que el archivo exista antes de leerlo
+        if (!fs.existsSync(dirPath)) {
+            return res.status(404).json({ error: "El archivo no existe" });
+        }
+
+        // Leemos el archivo línea por línea y lo almacenamos en un array
+        const fileLines = fs.readFileSync(dirPath, 'utf-8').split('\n');
+
+        res.json({ fileLines, dirPath });
+    } catch (error) {
+        console.error("Error leyendo el archivo:", error);
+        res.status(500).json({ error: "Error procesando el archivo" });
+    }
 });
 
 
