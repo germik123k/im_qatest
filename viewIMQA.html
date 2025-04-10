@@ -20,12 +20,35 @@
             background-color: #f0f8ff !important;
             border-color: #b5dbfc !important;
         }
-        .btn-green1{
-            background-color: #ffffff !important;
-            border-color: #8bffc1 !important; 
-            
-            
+
+        .btn-celeste1 {
+            background-color: #f0f8ff !important;
+            border-color: #b5dbfc !important;
         }
+        
+        .btn-verde1{
+            background-color: #b1ff8a !important;
+            border-color: #4adb01 !important;            
+        }
+        .btn-violeta1{
+            background-color: #e09dff !important;
+            border-color: #8900c9 !important;            
+        }
+        .btn-naranja1{
+            background-color: #ffd5ae !important;
+            border-color: #ff891b !important;            
+        }
+        .btn-rojo1{
+            background-color: #ff8f8f !important;
+            border-color: #ff2424 !important;            
+        }
+        .btn-amarillo1{
+            background-color: #ffe676 !important;
+            border-color: #ddb814 !important;            
+        }
+
+
+       
 
     </style>
 </head>
@@ -98,13 +121,13 @@
             </div>
             <div class="col-1 text-center">
                 <div class="d-flex flex-column">
-                    <button class="btn btn-primary btn-sm mb-1" onclick="moverFeature(true);">
+                    <button class="btn btn-primary btn-sm mb-1 allBoton01" onclick="moverFeature(true);">
                         <i class="fa fa-angle-right" aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-secondary btn-sm mb-1"  onclick="moverFeature(false);">
+                    <button class="btn btn-secondary btn-sm mb-1 allBoton01"  onclick="moverFeature(false);">
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-secondary btn-sm mb-1">
+                    <button class="btn btn-secondary btn-sm mb-1 allBoton01">
                         <i class="fa fa-angle-double-left" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -115,7 +138,7 @@
             </div>
             <div class="col-1 text-center">
                 <div class="d-flex flex-column">
-                    <button class="btn btn-success btn-sm mb-1" onclick="ejecutarTests();">Ejecutar</button>
+                    <button class="btn btn-success btn-sm mb-1" onclick="ejecutarLista();">Ejecutar</button>
                     <button class="btn btn-warning btn-sm mb-1">Pausa</button>
                     <button class="btn btn-danger btn-sm mb-1">Stop</button>
                 </div>
@@ -157,6 +180,17 @@
         var versionG='';
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
+        var hiloLatenciaG = null;
+        var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
+
+                
+
+
+
+
+
+
+        
         function updateEntornoVersion(){
             entornoG=$("#environmentSelect").val();
             versionG = $("#versionSelect").val();
@@ -237,6 +271,9 @@
             }
         }
 
+
+
+
         function selecFeature(idEl, classItems, color, newColor){
             idFeatureSel0G = idEl;
             // Restauramos todos los botones dentro de los contenedores al estilo default Bootstrap
@@ -297,30 +334,30 @@
         }
         function updateList() {
     limpiarContFiles();
-    var classItems = 'allItem0';
-    var color = '#ddedff';
-    var colorOver = '#cae4ff';
+        var classItems = 'allItem0';
+        var color = '#ddedff';
+        var colorOver = '#cae4ff';
 
-    for (var i = 0; i < arrListFeatures.length; i++) {
-        var idEl = 'item0-' + i;
-        var idSpinnerContainer = 'item0C-' + i;
-        var item = arrListFeatures[i];
+        for (var i = 0; i < arrListFeatures.length; i++) {
+            var idEl = 'item0-' + i;
+            var idSpinnerContainer = 'item0C-' + i;
+            var item = arrListFeatures[i];
 
-        $("#fileList").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
-             item + '<div id="' + idSpinnerContainer + '" style="margin-left:5px; display:inline-block;"><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+
-            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+            $("#fileList").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
+                item +
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+        }
+
+        for (var i = 0; i < arrListFeaturesProc.length; i++) {
+            var idEl = 'item0P-' + i;
+            var idSpinnerContainer = 'item0CP-' + i;
+            var item = arrListFeaturesProc[i];
+
+            $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
+                item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+        }
     }
-
-    for (var i = 0; i < arrListFeaturesProc.length; i++) {
-        var idEl = 'item0P-' + i;
-        var idSpinnerContainer = 'item0CP-' + i;
-        var item = arrListFeaturesProc[i];
-
-        $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
-            item + '<div id="' + idSpinnerContainer + '" style="margin-left:5px; display:inline-block;"><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+
-            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
-    }
-}
 
 
         function limpiarContFiles(){
@@ -328,29 +365,96 @@
             $("#fileList2").empty();
         }
 
-        function ejecutarLista(){
+
+        function ejecutarLista() {
+            // Deshabilitar los botones de la clase allBoton01
+            $(".allBoton01").prop("disabled", true);
+
+            // Cancelar cualquier instancia previa de hilo
+            if (hiloLatenciaG) {
+                clearTimeout(hiloLatenciaG);
+            }
+
+            // Configurar el estado inicial y crear un setTimeout
+            estadoColaProc = 'available';
+            ejecutarListaProcess();
+        }
+        var contGProcess=0;
+        var contGLatenciaTest=0;
+
+        function ejecutarListaProcess(){
+            if(estadoColaProc == 'available' && arrListFeaturesProc.length > 0 ){
+                if(contGProcess <= (arrListFeaturesProc.length-1)){
+                console.log('entro en ejecutarListaProcess concontGProcess:'+contGProcess);
+                estadoColaProc='bussy';
+                ejecutarFeature(arrListFeaturesProc[contGProcess]);
+                console.log('arrListFeaturesProc[contGProcess]:'+arrListFeaturesProc[contGProcess]);
+                latenciaEjecucion();
+                }else{
+                    desactivarSpinnerProcess();
+                    contGProcess=0;
+                    contGLatenciaTest=0;
+                    if (hiloLatenciaG) {
+                        clearTimeout(hiloLatenciaG);
+                    }      
+                }
+
+            }
+        } 
+        function latenciaEjecucion(){
+            if (hiloLatenciaG) {
+                clearTimeout(hiloLatenciaG);
+            }            
+
+            if(estadoColaProc=='bussy'){
+                console.log('contGLatenciaTest:'+contGLatenciaTest);
+                if(contGLatenciaTest >= 3){
+                    contGLatenciaTest = 0;
+                    estadoColaProc = 'available';
+                    contGProcess++;
+                    ejecutarListaProcess();
+                }
+                contGLatenciaTest++;
+            }
+
+            if(estadoColaProc=='bussy'){
+                hiloLatenciaG = setTimeout(latenciaEjecucion, 2000); // Ejecutar cada 2 segundos
+            }
+
+        }
+        function ejecutarFeature(fileFeature){
+
+
+
+            updateEntornoVersion();
+            activarSpinnerProcess(); 
+            var postData={fileName:fileFeature, env: entornoG, version: versionG};
+
+
+            /*
             $.ajax({
-               url: "http://localhost:3000/list-files",
+               url: "http://localhost:3000/run-tests",
                type: "POST",
                contentType: "application/json",
                data: JSON.stringify(postData),
                success: function(response) {
                     
-                    arrListFeatures = [];
-                    arrListFeatures = response.test;
-                    updateList();
-                    var strHtml = '';
-                    response.versiones.forEach(function(vercion) {
-                        strHtml+='<option value="'+vercion+'">'+vercion+'</option>';
-                    });
-                    $("#selVerc").html(strHtml);
                 },
                error: function(xhr, status, error) {
-                    console.error("Error al obtener el listado de archivos:", error);
+                    console.error("Error al realizar ejecucion de test:", error);
                }
             });
+            */
+
         }
-     
+        function activarSpinnerProcess(){           
+            console.log('entro activar spinner contGProcess:'+contGProcess)
+            $('.allitem0CP').css('display','none');
+            $('#item0CP-' + contGProcess).css('display','inline-block');
+        }
+        function desactivarSpinnerProcess(){
+            $('.allitem0CP').css('display','none');
+        }
       </script>
 
 </body>
