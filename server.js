@@ -16,7 +16,7 @@ app.post('/run-tests', (req, res) => {
     files.forEach(file => {
         fs.writeFileSync('params.json', JSON.stringify(file.params));
         const command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
-/*
+
         exec(command, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error ejecutando ${file.nameFile}:`, error);
@@ -31,7 +31,7 @@ app.post('/run-tests', (req, res) => {
             console.log(`Resultado de ${file.nameFile}:`, stdout);
             res.send(`Resultado de ${file.nameFile}: ${stdout}`);
         });
-        */
+        
     });
 });
 

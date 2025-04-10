@@ -163,7 +163,7 @@
                         var idEl = 'item0-'+i;
                         var item = response.test[i];
                         $("#fileList").append('<div class="'+classItems+'" id="'+idEl+'" style="cursor:pointer; width:100%; background-color:'+color+'; padding-left:2px; margin-bottom:3px;" onmouseover="overElementItem(\''+idEl+'\', \''+classItems+'\', \''+color+'\', \''+colorOver+'\');" onmouseout="outElementItem(\''+classItems+'\', \''+color+'\')">' + item + 
-                        '<button class="btn btn-light btn-sm ml-2" style=" height:24px; width:22px; padding:0px; float:right;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+                        '<button onclick="verFeature(\''+item+'\');" class="btn btn-light btn-sm ml-2" style=" height:24px; width:22px; padding:0px; float:right;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
 
                     }
                     var strHtml = '';
@@ -186,7 +186,21 @@
             $("#versionSelect").on("change", changeEntorno);
 
         });
-
+        function verFeature(idFeature){
+            $.ajax({
+               url: "http://localhost:3000/get_feature",
+               type: "POST",
+               contentType: "application/json",
+               data: JSON.stringify(postData),
+               success: function(response) {
+                    // Limpiamos el contenedor de archivos y lo actualizamos con la lista recibida
+                   console.log(response);
+                },
+               error: function(xhr, status, error) {
+                    console.error("Error al obtener el contenido del file:", error);
+               }
+            });
+        }
 
         //--FUNCIONES VARIAS--//
         function overElementItem(idEl, classItems, color, newColor ){
