@@ -21,32 +21,6 @@
             border-color: #b5dbfc !important;
         }
 
-        .btn-celeste1 {
-            background-color: #f0f8ff !important;
-            border-color: #b5dbfc !important;
-        }
-        
-        .btn-verde1{
-            background-color: #b1ff8a !important;
-            border-color: #4adb01 !important;            
-        }
-        .btn-violeta1{
-            background-color: #e09dff !important;
-            border-color: #8900c9 !important;            
-        }
-        .btn-naranja1{
-            background-color: #ffd5ae !important;
-            border-color: #ff891b !important;            
-        }
-        .btn-rojo1{
-            background-color: #ff8f8f !important;
-            border-color: #ff2424 !important;            
-        }
-        .btn-amarillo1{
-            background-color: #ffe676 !important;
-            border-color: #ddb814 !important;            
-        }
-
 
        
 
@@ -76,9 +50,14 @@
 
                     <!-- Bloque de categoría -->
                     <label for="categorySelect" class="mb-0 ml-3 mr-2">Categoría:</label>
-                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;">
-                        <option value="1">Opción 1</option>
-                        <option value="2">Opción 2</option>
+                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;" onchange="colorizarItem();">
+                        <option value="0">Color 1</option>
+                        <option value="1">Color 2</option>
+                        <option value="2">Color 3</option>
+                        <option value="3">Color 4</option>
+                        <option value="4">Color 5</option>
+                        <option value="5">Color 6</option>
+                        <option value="6">Color 7</option>
                     </select>
                     <button class="btn btn-secondary btn-sm ml-2" id="categoryButton">
                         <i class="fa fa-refresh" aria-hidden="true"></i>
@@ -254,33 +233,73 @@
 
         //--FUNCIONES VARIAS--//
         function overElementItem(idEl, classItems, color, newColor ){
-            $('.'+classItems).css('background-color',color);
-            $('.'+classItems).css('border','none');
-            $('#'+idEl).css('background-color',newColor);
+
+
+            $('.'+classItems).css('background-color',colorBackgeround1[colorL1G]);
+            $('.'+classItems).css('border','1px solid '+colorBorde[colorL1G]);
+            $('#'+idEl).css('background-color',colorBackgeround2[colorL1G]);
             if(idFeatureSel0G != ''){
-                $('#'+idFeatureSel0G).css('background-color','#b1ff8a');
-                $('#'+idFeatureSel0G).css('border','1px solid #4adb01');
+                $('#'+idFeatureSel0G).css('background-color',colorBackgeround1[colorL1SelectG]);
+                $('#'+idFeatureSel0G).css('border','1px solid '+colorBorde[colorL1SelectG]);
             }
 
         }
         function outElementItem(classItems, color){
-            $('.'+classItems).css('background-color',color);
+            $('.'+classItems).css('background-color',colorBackgeround1[colorL1G]);
+            $('.'+classItems).css('border','1px solid '+colorBorde[colorL1G]);
             if(idFeatureSel0G != ''){
-                $('#'+idFeatureSel0G).css('background-color','#b1ff8a');
-                $('#'+idFeatureSel0G).css('border','1px solid #4adb01');
+                $('#'+idFeatureSel0G).css('background-color',colorBackgeround1[colorL1SelectG]);
+                $('#'+idFeatureSel0G).css('border','1px solid '+colorBorde[colorL1SelectG]);
             }
         }
+        const colorBackgeround1 = [
+            "#f0f8ff", // Celeste
+            "#b1ff8a", // Verde
+            "#e09dff", // Violeta
+            "#ffd5ae", // Naranja
+            "#ff8f8f", // Rojo
+            "#ffe676", // Amarillo
+            "#bbbbbb"  // Gris
+        ];
 
+        const colorBackgeround2 = [
+            "#5baeff", // Celeste (Hover)
+            "#85ff5c", // Verde (Hover)
+            "#c775ff", // Violeta (Hover)
+            "#ffab65", // Naranja (Hover)
+            "#ff4c4c", // Rojo (Hover)
+            "#ffcb3a", // Amarillo (Hover)
+            "#9e9e9e"  // Gris (Hover)
+        ];
+
+        const colorBorde = [
+            "#b5dbfc", // Celeste
+            "#4adb01", // Verde
+            "#8900c9", // Violeta
+            "#ff891b", // Naranja
+            "#ff2424", // Rojo
+            "#ddb814", // Amarillo
+            "#3f3f3f"  // Gris
+        ];
+        var colorL1G = 0;
+        var colorL1SelectG = 2;
+
+        function colorizarItem(){
+            var color = $('#categorySelect').val();
+            $('.allItem0').css('background-color',colorBackgeround1[color]);
+            $('.allItem0').css('border','1px solid '+colorBorde[color]);
+
+        }
 
 
 
         function selecFeature(idEl, classItems, color, newColor){
             idFeatureSel0G = idEl;
             // Restauramos todos los botones dentro de los contenedores al estilo default Bootstrap
-            $('.' + classItems).find('button.btn-light').attr("style", "background-color: #f0f8ff !important; border-color: #b5dbfc !important; height:24px; width:22px; padding:0px; float:right;");
+           // $('.' + classItems).find('button.btn-light').attr("style", "background-color: #f0f8ff !important; border-color: #b5dbfc !important; height:24px; width:22px; padding:0px; float:right;");
+           $('.' + classItems).css('background-color',colorBackgeround1[color]);
+            $('.' + classItems).css('border','1px solid '+colorBorde[color]);
 
-            // Aplicamos el color especial solo a los botones dentro del elemento seleccionado
-            $('#' + idEl).find('button.btn-light').attr("style", "background-color: #ffffff !important; border-color: #a1ff71 !important; height:24px; width:22px; padding:0px; float:right;");
 
             overElementItem(idEl, classItems, color, newColor );
         }
@@ -345,7 +364,7 @@
 
             $("#fileList").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
                 item +
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
         }
 
         for (var i = 0; i < arrListFeaturesProc.length; i++) {
@@ -355,7 +374,7 @@
 
             $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
                 item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
         }
     }
 
