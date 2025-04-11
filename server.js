@@ -12,7 +12,9 @@ app.use(express.json());
 // Endpoint ya existente para ejecutar tests
 app.post('/run-tests', (req, res) => {
     const files = req.body.files;
-
+    var resp = req.body;
+/*
+//npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login_2.js .\tests\prod_actual\Base\features\login_2.feature
     files.forEach(file => {
         fs.writeFileSync('params.json', JSON.stringify(file.params));
         const command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
@@ -33,6 +35,8 @@ app.post('/run-tests', (req, res) => {
         });
         
     });
+    */
+    res.json({ respS: resp });
 });
 
 // Nuevo endpoint para listar archivos en la carpeta de features

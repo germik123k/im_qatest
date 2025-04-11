@@ -106,7 +106,10 @@
                     <button class="btn btn-secondary btn-sm mb-1 allBoton01"  onclick="moverFeature(false);">
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                     </button>
-                    <button class="btn btn-secondary btn-sm mb-1 allBoton01">
+                    <button class="btn btn-secondary btn-sm mb-1 allBoton01" onclick="moverFeatureAll(false);">
+                        <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm mb-1 allBoton01" onclick="moverFeatureAll(true);">
                         <i class="fa fa-angle-double-left" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -161,6 +164,7 @@
         var arrListFeatures = [];
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
+        var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
 
                 
 
@@ -232,9 +236,9 @@
         }
 
         //--FUNCIONES VARIAS--//
-        function overElementItem(idEl, classItems, color, newColor ){
+        function overElementItem(idEl, classItems ){
 
-
+            $('.item0IcPAll').css('display','none');
             $('.'+classItems).css('background-color',colorBackgeround1[colorL1G]);
             $('.'+classItems).css('border','1px solid '+colorBorde[colorL1G]);
             $('#'+idEl).css('background-color',colorBackgeround2[colorL1G]);
@@ -244,7 +248,7 @@
             }
 
         }
-        function outElementItem(classItems, color){
+        function outElementItem(classItems){
             $('.'+classItems).css('background-color',colorBackgeround1[colorL1G]);
             $('.'+classItems).css('border','1px solid '+colorBorde[colorL1G]);
             if(idFeatureSel0G != ''){
@@ -293,15 +297,15 @@
 
 
 
-        function selecFeature(idEl, classItems, color, newColor){
+        function selecFeature(idEl, classItems){
             idFeatureSel0G = idEl;
             // Restauramos todos los botones dentro de los contenedores al estilo default Bootstrap
            // $('.' + classItems).find('button.btn-light').attr("style", "background-color: #f0f8ff !important; border-color: #b5dbfc !important; height:24px; width:22px; padding:0px; float:right;");
-           $('.' + classItems).css('background-color',colorBackgeround1[color]);
-            $('.' + classItems).css('border','1px solid '+colorBorde[color]);
+           $('.' + classItems).css('background-color',colorBackgeround1[colorL1G]);
+            $('.' + classItems).css('border','1px solid '+colorBorde[colorL1G]);
 
 
-            overElementItem(idEl, classItems, color, newColor );
+            overElementItem(idEl, classItems);
         }
 
         function obtenerFeature(fileFeature) {
@@ -325,6 +329,19 @@
                     console.error("Error al obtener el contenido del archivo:", error);
             }
             });
+        }
+        function moverFeatureAll(aProcesar) {
+            if (!aProcesar) {
+                // Mover todos los elementos de arrListFeatures a arrListFeaturesProc en el orden original
+                arrListFeaturesProc = arrListFeaturesProc.concat(arrListFeatures);
+                arrListFeatures = []; // Vaciar la lista original
+            } else {
+                // Mover todos los elementos de arrListFeaturesProc a arrListFeatures y ordenarlos alfabéticamente
+                arrListFeatures = arrListFeatures.concat(arrListFeaturesProc).sort((a, b) => a.localeCompare(b));
+                arrListFeaturesProc = []; // Vaciar la lista de procesados
+            }
+
+            updateList(); // Actualizar la UI
         }
 
         function moverFeature(aProcesar) {
@@ -354,15 +371,17 @@
         function updateList() {
     limpiarContFiles();
         var classItems = 'allItem0';
-        var color = '#ddedff';
-        var colorOver = '#cae4ff';
+
 
         for (var i = 0; i < arrListFeatures.length; i++) {
             var idEl = 'item0-' + i;
             var idSpinnerContainer = 'item0C-' + i;
             var item = arrListFeatures[i];
 
-            $("#fileList").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
+
+
+
+            $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
                 item +
                 '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
         }
@@ -371,10 +390,15 @@
             var idEl = 'item0P-' + i;
             var idSpinnerContainer = 'item0CP-' + i;
             var item = arrListFeaturesProc[i];
+            var strHtmlIcon0 = '<div id="item0Ic0P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
+            var strHtmlIcon1 = '<div id="item0Ic1P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
+            var strHtmlIcon2 = '<div id="item0Ic2P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
 
-            $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + color + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\', \'' + color + '\', \'' + colorOver + '\');" onmouseout="outElementItem(\'' + classItems + '\', \'' + color + '\')">' +
-                item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+
+            $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+                
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button>'+strHtmlIcon0+strHtmlIcon1+strHtmlIcon2+'</div>');
+                
         }
     }
 
@@ -386,17 +410,22 @@
 
 
         function ejecutarLista() {
-            // Deshabilitar los botones de la clase allBoton01
-            $(".allBoton01").prop("disabled", true);
+            if(runColaProcess == false && arrListFeaturesProc.length > 0){
+                runColaProcess=true;
+                // Deshabilitar los botones de la clase allBoton01
+                $(".allBoton01").prop("disabled", true);
+                $('.item0IcPAll').css('display','none');
+                deshabilitarElementos();
+                itmesGrices();
+                // Cancelar cualquier instancia previa de hilo
+                if (hiloLatenciaG) {
+                    clearTimeout(hiloLatenciaG);
+                }
 
-            // Cancelar cualquier instancia previa de hilo
-            if (hiloLatenciaG) {
-                clearTimeout(hiloLatenciaG);
+                // Configurar el estado inicial y crear un setTimeout
+                estadoColaProc = 'available';
+                ejecutarListaProcess();
             }
-
-            // Configurar el estado inicial y crear un setTimeout
-            estadoColaProc = 'available';
-            ejecutarListaProcess();
         }
         var contGProcess=0;
         var contGLatenciaTest=0;
@@ -413,6 +442,9 @@
                     desactivarSpinnerProcess();
                     contGProcess=0;
                     contGLatenciaTest=0;
+                    runColaProcess = false;
+                    habilitarElementos();
+                    itmesList1Default();
                     if (hiloLatenciaG) {
                         clearTimeout(hiloLatenciaG);
                     }      
@@ -421,6 +453,8 @@
             }
         } 
         function latenciaEjecucion(){
+            var estadoRespuesta=0;//0=ok, 1=alerta, 2=fallo
+  
             if (hiloLatenciaG) {
                 clearTimeout(hiloLatenciaG);
             }            
@@ -430,8 +464,13 @@
                 if(contGLatenciaTest >= 3){
                     contGLatenciaTest = 0;
                     estadoColaProc = 'available';
+                    if(contGProcess==1)estadoRespuesta=2;
+                    if(contGProcess==2)estadoRespuesta=1;
+
+                    showIconItemResultado(estadoRespuesta,contGProcess);
                     contGProcess++;
                     ejecutarListaProcess();
+
                 }
                 contGLatenciaTest++;
             }
@@ -450,7 +489,7 @@
             var postData={fileName:fileFeature, env: entornoG, version: versionG};
 
 
-            /*
+            
             $.ajax({
                url: "http://localhost:3000/run-tests",
                type: "POST",
@@ -463,10 +502,65 @@
                     console.error("Error al realizar ejecucion de test:", error);
                }
             });
-            */
+            
 
         }
-        function activarSpinnerProcess(){           
+        function showIconItemResultado(result,item){
+            $('#item0Ic'+result+'P-'+item+'').css('display', 'inline-block');
+            var colorResult = 1;
+            switch(parseInt(result)){
+                case 1:
+                    colorResult = 5;
+                break;
+                case 2:
+                    colorResult = 4;
+                break;
+            }
+            $('#item0P-' + item).css('background-color',colorBackgeround1[colorResult]);
+            $('#item0P-' + item).css('border','1px solid '+colorBorde[colorResult]);
+        }
+
+        function deshabilitarElementos() {
+            // Selecciona todos los elementos dentro del body
+            let elementos = document.querySelectorAll("body *");
+
+            // Aplica el disabled a todo excepto los botones "Pausa" y "Stop"
+            elementos.forEach(el => {
+                if (el.tagName === "BUTTON") {
+                    if (!el.textContent.includes("Pausa") && !el.textContent.includes("Stop")) {
+                        el.disabled = true;
+                    }
+                } else {
+                    el.style.pointerEvents = "none"; // Bloquea la interacción de otros elementos
+                }
+            });
+
+            // Asegurar que los botones "Pausa" y "Stop" mantengan su interactividad
+            document.querySelectorAll("button").forEach(button => {
+                if (button.textContent.includes("Pausa") || button.textContent.includes("Stop")) {
+                    button.style.pointerEvents = "auto"; // Reactiva interacción
+                }
+            });
+        }
+
+
+        function habilitarElementos() {
+            // Selecciona todos los elementos dentro del body
+            let elementos = document.querySelectorAll("body *");
+
+            // Remueve el disabled de los botones y permite la interacción nuevamente
+            elementos.forEach(el => {
+                if (el.tagName === "BUTTON") {
+                    el.disabled = false; // Reactiva los botones
+                } else {
+                    el.style.pointerEvents = "auto"; // Reactiva la interacción en otros elementos
+                }
+            });
+
+            // También puedes volver a activar los botones específicos si lo necesitas
+            $(".allBoton01").prop("disabled", false);
+        }
+        function activarSpinnerProcess(){
             console.log('entro activar spinner contGProcess:'+contGProcess)
             $('.allitem0CP').css('display','none');
             $('#item0CP-' + contGProcess).css('display','inline-block');
@@ -474,6 +568,15 @@
         function desactivarSpinnerProcess(){
             $('.allitem0CP').css('display','none');
         }
+        function itmesGrices(){
+            $('.allItem0').css('background-color',colorBackgeround1[6]);
+            $('.allItem0').css('border','1px solid '+colorBorde[6]);
+        }
+        function itmesList1Default(){
+            $('.allItem0L1').css('background-color',colorBackgeround1[colorL1G]);
+            $('.allItem0L1').css('border','1px solid '+colorBorde[colorL1G]);
+        }
+
       </script>
 
 </body>
