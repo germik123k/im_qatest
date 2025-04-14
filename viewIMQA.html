@@ -77,8 +77,8 @@
 
                     <!-- Bloque de versión -->
                     <label for="selVerc" class="mb-0 ml-3 mr-2">versión:</label>
-                    <select id="selVerc" class="form-control form-control-sm" style="width: 100px;">
-                        <option value="prod_actual" selected>2.7</option>
+                    <select id="versionSelect" class="form-control form-control-sm" style="width: 100px;">
+                        <option value="2.7" selected>2.7</option>
                     </select>
                     <button class="btn btn-secondary btn-sm ml-2" id="environmentButton">
                         <i class="fa fa-refresh" aria-hidden="true"></i>
@@ -120,9 +120,9 @@
             </div>
             <div class="col-1 text-center">
                 <div class="d-flex flex-column">
-                    <button class="btn btn-success btn-sm mb-1" onclick="ejecutarLista();">Ejecutar</button>
-                    <button class="btn btn-warning btn-sm mb-1">Pausa</button>
-                    <button class="btn btn-danger btn-sm mb-1">Stop</button>
+                    <button id="btnEjecutar" class="btn btn-success btn-sm mb-1" onclick="ejecutarLista();">Ejecutar</button>
+                    <button id="btnPausa" class="btn btn-warning btn-sm mb-1">Pausa</button>
+                    <button id="btnStop" class="btn btn-danger btn-sm mb-1">Stop</button>
                 </div>
             </div>
         </div>
@@ -187,7 +187,7 @@
             updateEntornoVersion();            
             // Preparamos los datos a enviar en la petición
             var postData = { env: entornoG, version: versionG};
-            
+            console.log('postData:',postData);
             // Enviamos la petición POST al endpoint /list-files del backend
             $.ajax({
                url: "http://localhost:3000/list-files",
@@ -311,7 +311,7 @@
         function obtenerFeature(fileFeature) {
             updateEntornoVersion();   
             var postData={fileName:fileFeature, env: entornoG, version: versionG};
-
+            console.log('postData:',postData);
             $.ajax({
             url: "http://localhost:3000/read-file-feature",
             type: "POST",
@@ -410,6 +410,9 @@
 
 
         function ejecutarLista() {
+            if($('#btnEjecutar').html() == "Ejecutarr"){
+                console.log('ejecutar Ok');
+            }
             if(runColaProcess == false && arrListFeaturesProc.length > 0){
                 runColaProcess=true;
                 // Deshabilitar los botones de la clase allBoton01
@@ -443,7 +446,8 @@
                     contGProcess=0;
                     contGLatenciaTest=0;
                     runColaProcess = false;
-                    habilitarElementos();
+                    //habilitarElementos();
+                    botoneraFinalizar();
                     itmesList1Default();
                     if (hiloLatenciaG) {
                         clearTimeout(hiloLatenciaG);
@@ -486,7 +490,7 @@
 
             updateEntornoVersion();
             activarSpinnerProcess(); 
-            var postData={fileName:fileFeature, env: entornoG, version: versionG};
+            var postData={fileName:fileFeature, env: entornoG, version: versionG, user: 'admin'};
 
 
             
@@ -542,7 +546,13 @@
                 }
             });
         }
+        function botoneraFinalizar(){
+              $("#btnEjecutar").prop("disabled", false);
+              $("#btnEjecutar").html("Finalizar");
 
+              $("#btnPausa").prop("disabled", true);
+              $("#btnStop").prop("disabled", true);
+        }
 
         function habilitarElementos() {
             // Selecciona todos los elementos dentro del body

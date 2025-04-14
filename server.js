@@ -6,36 +6,88 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+const { initializeApp } = require("firebase/app");
+const { getFirestore, doc, setDoc } = require("firebase/firestore");
+
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyAcAYZ1JYGs5yqFDataBLwn3yw",
+    authDomain: "tienda-65655.firebaseapp.com",
+    projectId: "tienda-65655",
+    storageBucket: "tienda-65655.firebasestorage.app",
+    messagingSenderId: "968578468430",
+    appId: "1:968578468430:web:d3487d1139777b1954d11f"
+  };
+  
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+var fileStepG = '';
+var fileFeatureG='';
+var vercionPathG='';
+
+
 app.use(cors());
 app.use(express.json());
 
 // Endpoint ya existente para ejecutar tests
-app.post('/run-tests', (req, res) => {
-    const files = req.body.files;
+app.post('/run-tests', async (req, res) => {
+    //const files = req.body.files;
     var resp = req.body;
+    const uuid = `${req.body.fileName}_${Date.now()}`;
+    req.body.uuid = uuid;
 /*
-//npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login_2.js .\tests\prod_actual\Base\features\login_2.feature
-    files.forEach(file => {
-        fs.writeFileSync('params.json', JSON.stringify(file.params));
-        const command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
 
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error ejecutando ${file.nameFile}:`, error);
-                res.status(500).send(`Error ejecutando ${file.nameFile}: ${error}`);
-                return;
-            }
-            if (stderr) {
-                console.error(`Error en ${file.nameFile}:`, stderr);
-                res.status(500).send(`Error en ${file.nameFile}: ${stderr}`);
-                return;
-            }
-            console.log(`Resultado de ${file.nameFile}:`, stdout);
-            res.send(`Resultado de ${file.nameFile}: ${stdout}`);
-        });
+    try {
+        // Generamos un UUID para la ejecución
         
+
+        // Guardamos en Firebase el estado "procesando"
+        await setDoc(doc(db, "estado_test", uuid), {
+            name_feature: req.body.fileName,
+            estado: "procesando",
+            user: req.body.user,
+            fecha: new Date().toISOString(),
+            ambiente: req.body.env,
+            version: req.body.version,
+            logs: [],
+            uuid: uuid
+        });
+
+        res.json({ message: "Test iniciado", uuid });
+
+    } catch (error) {
+        console.error("Error al registrar estado en Firebase:", error);
+        res.status(500).json({ error: "Error al registrar estado en Firebase" });
+    }
+*/
+
+
+
+//npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login_2.js .\tests\prod_actual\Base\features\login_2.feature
+
+//var command = `npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login.js ./tests/prod_actual/Base/features/login.feature`; 
+       // fs.writeFileSync('params.json', JSON.stringify(file.params));
+           // var command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
+        validarArchivos(req.body);
+        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error ejecutando ${req.body.fileName}:`, error);
+            //res.status(500).send(`Error ejecutando ${req.body.fileName}: ${error}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`Error en ${req.body.fileName}:`, stderr);
+            //res.status(500).send(`Error en ${req.body.fileName}: ${stderr}`);
+            return;
+        }
+        console.log(`Resultado de ${req.body.fileName}:`, stdout);
+        //res.send(`Resultado de ${req.body.fileName}: ${stdout}`);
     });
-    */
+        
+
+    
     res.json({ respS: resp });
 });
 
@@ -45,7 +97,7 @@ app.post('/list-files', (req, res) => {
     const env = req.body.env || 'prod_actual';
     const version = req.body.version ? req.body.version : 'Base';
     
-    const dirPath = path.join(__dirname, 'tests', env, version, 'features');
+    const dirPath = path.join(__dirname, 'tests', env, 'Base/features');
     const dirPath2 = path.join(__dirname, 'tests', env);
     
     let directorios = [];
@@ -107,7 +159,7 @@ app.post('/read-file-feature', (req, res) => {
     }
 
     try {
-        const dirPath = path.join(__dirname, 'tests', env, version, 'features', fileName);
+        const dirPath = path.join(__dirname, 'tests', env, 'Base/features', fileName);
 
         // Validamos que el archivo exista antes de leerlo
         if (!fs.existsSync(dirPath)) {
@@ -128,3 +180,24 @@ app.post('/read-file-feature', (req, res) => {
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+
+function validarArchivos(reqBody) {
+    // Extraer el nombre del step-definition a partir del fileName
+    fileFeatureG = reqBody.fileName;
+    fileStepG = fileFeatureG.split('.')[0] + '.js'; // login.feature → login.js
+
+    // Ruta de la versión solicitada
+    const rutaVersion = `./tests/${reqBody.env}/${reqBody.version}/features`;
+    
+    // Ruta alternativa (Base) si la versión no existe
+    const rutaBase = `./tests/${reqBody.env}/Base/features`;
+
+    // Validamos si la rutaVersion existe
+    if (fs.existsSync(rutaVersion)) {
+        vercionPathG = reqBody.version;
+    } else {
+        vercionPathG = "Base"; // Usamos Base si la versión no está disponible
+    }
+
+    console.log(`Validación completa -> Step: ${fileStepG}, Feature: ${fileFeatureG}, Path: ${vercionPathG}`);
+}

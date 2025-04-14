@@ -13,7 +13,7 @@ When('el usuario hace click en {string} button', async function (buttonName) {
 });
 
 When('luego de unos segundos ingresas sus credenciales', async function () {
-  await this.page.waitForTimeout(2000);
+  await this.page.waitForTimeout(4000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
   await this.page.fill('#username', 'pt304596@gmail.com');
   await this.page.waitForSelector('#password', { timeout: 10000 });
