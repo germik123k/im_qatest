@@ -160,6 +160,7 @@
         var idFeatureSel0G = '';
         var entornoG='';
         var versionG='';
+        var uuidG =''; //registro procesandose
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
         var hiloLatenciaG = null;
@@ -379,8 +380,6 @@
             var item = arrListFeatures[i];
 
 
-
-
             $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
                 item +
                 '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
@@ -410,28 +409,31 @@
 
 
         function ejecutarLista() {
-            if($('#btnEjecutar').html() == "Ejecutarr"){
-                console.log('ejecutar Ok');
-            }
-            if(runColaProcess == false && arrListFeaturesProc.length > 0){
-                runColaProcess=true;
-                // Deshabilitar los botones de la clase allBoton01
-                $(".allBoton01").prop("disabled", true);
-                $('.item0IcPAll').css('display','none');
-                deshabilitarElementos();
-                itmesGrices();
-                // Cancelar cualquier instancia previa de hilo
-                if (hiloLatenciaG) {
-                    clearTimeout(hiloLatenciaG);
-                }
+            if($('#btnEjecutar').html() == "Ejecutar"){
+                if(runColaProcess == false && arrListFeaturesProc.length > 0){
+                    runColaProcess=true;
+                    // Deshabilitar los botones de la clase allBoton01
+                    $(".allBoton01").prop("disabled", true);
+                    $('.item0IcPAll').css('display','none');
+                    deshabilitarElementos();
+                    itmesGrices();
+                    // Cancelar cualquier instancia previa de hilo
+                    if (hiloLatenciaG) {
+                        clearTimeout(hiloLatenciaG);
+                    }
 
-                // Configurar el estado inicial y crear un setTimeout
-                estadoColaProc = 'available';
-                ejecutarListaProcess();
+                    // Configurar el estado inicial y crear un setTimeout
+                    estadoColaProc = 'available';
+                    ejecutarListaProcess();
+                }
+            }else{
+                habilitarElementos();
+                itmesList1Default();
+                
+                $('#btnEjecutar').html("Ejecutar");
             }
         }
         var contGProcess=0;
-        var contGLatenciaTest=0;
 
         function ejecutarListaProcess(){
             if(estadoColaProc == 'available' && arrListFeaturesProc.length > 0 ){
@@ -440,15 +442,13 @@
                 estadoColaProc='bussy';
                 ejecutarFeature(arrListFeaturesProc[contGProcess]);
                 console.log('arrListFeaturesProc[contGProcess]:'+arrListFeaturesProc[contGProcess]);
-                latenciaEjecucion();
                 }else{
                     desactivarSpinnerProcess();
                     contGProcess=0;
                     contGLatenciaTest=0;
                     runColaProcess = false;
-                    //habilitarElementos();
                     botoneraFinalizar();
-                    itmesList1Default();
+                    
                     if (hiloLatenciaG) {
                         clearTimeout(hiloLatenciaG);
                     }      
@@ -464,23 +464,46 @@
             }            
 
             if(estadoColaProc=='bussy'){
-                console.log('contGLatenciaTest:'+contGLatenciaTest);
-                if(contGLatenciaTest >= 3){
-                    contGLatenciaTest = 0;
-                    estadoColaProc = 'available';
-                    if(contGProcess==1)estadoRespuesta=2;
-                    if(contGProcess==2)estadoRespuesta=1;
 
-                    showIconItemResultado(estadoRespuesta,contGProcess);
-                    contGProcess++;
-                    ejecutarListaProcess();
 
-                }
-                contGLatenciaTest++;
+                $.ajax({
+                    url: "http://localhost:3000/get-registro-test",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({uuid:uuidG}),
+                    success: function(response) {
+                            
+                        console.log('response:',response);
+                        if(response.registro.estado=='procesando'){
+
+                            hiloLatenciaG = setTimeout(latenciaEjecucion, 2000); // Ejecutar cada 2 segundos
+                        }else{
+                            estadoColaProc = 'available';
+                            if(response.registro.estado=='completado')estadoRespuesta=0;
+                            showIconItemResultado(estadoRespuesta,contGProcess);
+                            contGProcess++;
+                            ejecutarListaProcess();
+
+                        }
+                        //latenciaEjecucion();
+
+
+                    },
+                    error: function(xhr, status, error) {
+                            console.error("Error al realizar ejecucion de test:", error);
+                    }
+                });
+
+
+
+                
+
+                
+            
             }
 
             if(estadoColaProc=='bussy'){
-                hiloLatenciaG = setTimeout(latenciaEjecucion, 2000); // Ejecutar cada 2 segundos
+               // hiloLatenciaG = setTimeout(latenciaEjecucion, 2000); // Ejecutar cada 2 segundos
             }
 
         }
@@ -501,6 +524,15 @@
                data: JSON.stringify(postData),
                success: function(response) {
                     
+/*
+app.post('/get-registro-test', async (req, res) => {
+    const { uuid } = req.body;
+
+*/
+                    uuidG = response.respS.uuid;
+                    latenciaEjecucion();
+
+
                 },
                error: function(xhr, status, error) {
                     console.error("Error al realizar ejecucion de test:", error);
@@ -548,10 +580,14 @@
         }
         function botoneraFinalizar(){
               $("#btnEjecutar").prop("disabled", false);
+              $("#btnEjecutar").css("pointerEvents", 'auto');
               $("#btnEjecutar").html("Finalizar");
 
               $("#btnPausa").prop("disabled", true);
               $("#btnStop").prop("disabled", true);
+
+
+
         }
 
         function habilitarElementos() {

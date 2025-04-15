@@ -7,7 +7,7 @@ const app = express();
 const port = 3000;
 
 const { initializeApp } = require("firebase/app");
-const { getFirestore, doc, setDoc } = require("firebase/firestore");
+const { getFirestore, doc, setDoc, getDoc, updateDoc } = require("firebase/firestore");
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -31,15 +31,14 @@ app.use(express.json());
 
 // Endpoint ya existente para ejecutar tests
 app.post('/run-tests', async (req, res) => {
-    //const files = req.body.files;
-    var resp = req.body;
+
+    // Generamos un UUID para la ejecución
     const uuid = `${req.body.fileName}_${Date.now()}`;
     req.body.uuid = uuid;
-/*
+    var errorDB = true;
 
     try {
-        // Generamos un UUID para la ejecución
-        
+ 
 
         // Guardamos en Firebase el estado "procesando"
         await setDoc(doc(db, "estado_test", uuid), {
@@ -52,44 +51,55 @@ app.post('/run-tests', async (req, res) => {
             logs: [],
             uuid: uuid
         });
-
-        res.json({ message: "Test iniciado", uuid });
+        errorDB = false;
+        //res.json({ message: "Test iniciado", uuid });
 
     } catch (error) {
         console.error("Error al registrar estado en Firebase:", error);
         res.status(500).json({ error: "Error al registrar estado en Firebase" });
     }
-*/
 
+    if(!errorDB){
 
-
-//npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login_2.js .\tests\prod_actual\Base\features\login_2.feature
-
-//var command = `npx cucumber-js --require ./tests/prod_actual/Base/step-definitions/login.js ./tests/prod_actual/Base/features/login.feature`; 
-       // fs.writeFileSync('params.json', JSON.stringify(file.params));
-           // var command = `npx cucumber-js ./features --require ./step-definitions/${file.nameFile}`;
-        validarArchivos(req.body);
-        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
+    validarArchivos(req.body);
+    var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
 
     exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error ejecutando ${req.body.fileName}:`, error);
-            //res.status(500).send(`Error ejecutando ${req.body.fileName}: ${error}`);
-            return;
-        }
-        if (stderr) {
-            console.error(`Error en ${req.body.fileName}:`, stderr);
-            //res.status(500).send(`Error en ${req.body.fileName}: ${stderr}`);
-            return;
-        }
-        console.log(`Resultado de ${req.body.fileName}:`, stdout);
-        //res.send(`Resultado de ${req.body.fileName}: ${stdout}`);
+        resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
     });
-        
+            
 
-    
-    res.json({ respS: resp });
+        var resp = req.body;
+        resp.errorDB = errorDB;
+        res.json({ respS: resp });
+    }
 });
+
+
+app.post('/get-registro-test', async (req, res) => {
+    const { uuid } = req.body;
+
+    if (!uuid) {
+        return res.status(400).json({ error: "Falta el UUID en la solicitud" });
+    }
+
+    try {
+        // Buscar el documento en Firebase
+        const docRef = doc(db, "estado_test", uuid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            // Devolver el estado actual
+            res.json({ registro: docSnap.data() });
+        } else {
+            res.status(404).json({ error: "Registro no encontrado" });
+        }
+    } catch (error) {
+        console.error("Error al consultar el test:", error);
+        res.status(500).json({ error: "Error al obtener el registro" });
+    }
+});
+
 
 // Nuevo endpoint para listar archivos en la carpeta de features
 app.post('/list-files', (req, res) => {
@@ -200,4 +210,29 @@ function validarArchivos(reqBody) {
     }
 
     console.log(`Validación completa -> Step: ${fileStepG}, Feature: ${fileFeatureG}, Path: ${vercionPathG}`);
+}
+
+
+async function resultadoDeTest(uuid, fileName, error, stdout, stderr) {
+    try {
+        let estadoFinal = "completado"; // Estado por defecto
+        let logs = [];
+
+        if (error || stderr) {
+            estadoFinal = "error"; // Si hubo un fallo, marcamos como error
+            logs.push(error ? error.toString() : stderr.toString());
+        } else {
+            logs.push(stdout.toString());
+        }
+
+        // Actualizar el estado y agregar logs en Firebase
+        await updateDoc(doc(db, "estado_test", uuid), {
+            estado: estadoFinal,
+            logs: logs
+        });
+
+        console.log(`🔥 Test ${fileName} finalizado con estado: ${estadoFinal}`);
+    } catch (err) {
+        console.error(`Error actualizando Firebase para ${fileName}:`, err);
+    }
 }
