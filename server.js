@@ -7,7 +7,7 @@ const app = express();
 const port = 3000;
 
 const { initializeApp } = require("firebase/app");
-const { getFirestore, doc, setDoc, getDoc, updateDoc } = require("firebase/firestore");
+const { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } = require("firebase/firestore");
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -64,10 +64,22 @@ app.post('/run-tests', async (req, res) => {
     validarArchivos(req.body);
     var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
 
-    exec(command, (error, stdout, stderr) => {
-        resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
-    });
-            
+         
+    const { chromium } = require('playwright');
+
+    exec(command, async (error, stdout, stderr) => {
+        const browser = await chromium.launch(); // Abres el navegador
+   
+        try {
+            // Tu lógica actual para ejecutar los tests
+            resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
+        } catch (err) {
+            console.error('Error durante la ejecución:', err);
+        } finally {
+            await browser.close(); // Asegúrate de que el navegador se cierra siempre
+        }
+    });    
+
 
         var resp = req.body;
         resp.errorDB = errorDB;
@@ -187,6 +199,30 @@ app.post('/read-file-feature', (req, res) => {
 });
 
 
+app.post('/delete-documents', async (req, res) => {
+    const { coleccion } = req.body; // Extraemos la colección desde el request
+    if (!coleccion) {
+        return res.status(400).json({ error: "La colección no fue especificada." });
+    }
+    console.error("coleccion:", coleccion);
+    try {
+        // Accedemos a la colección y obtenemos todos los documentos
+        const snapshot = await getDocs(collection(db, coleccion));
+        
+        const promises = [];
+        snapshot.forEach((docSnap) => {
+            // Recorremos cada documento y lo eliminamos
+            promises.push(deleteDoc(doc(db, coleccion, docSnap.id)));
+        });
+
+        await Promise.all(promises); // Ejecutamos todas las eliminaciones de manera paralela
+        res.status(200).json({ message: `Todos los documentos de la colección '${coleccion}' fueron eliminados.` });
+    } catch (error) {
+        console.error("Error al eliminar documentos:", error);
+        res.status(500).json({ error: "Error al eliminar documentos en Firebase." });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
@@ -235,4 +271,6 @@ async function resultadoDeTest(uuid, fileName, error, stdout, stderr) {
     } catch (err) {
         console.error(`Error actualizando Firebase para ${fileName}:`, err);
     }
+
+
 }

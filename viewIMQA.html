@@ -34,6 +34,8 @@
             </div>
             <div class="col text-right">
                 <button class="btn btn-secondary btn-sm">Login</button>
+                <button class="btn btn-secondary btn-sm" onclick="borrarRegistros();">Borrar Registros <i class="fa fa-trash" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
 
@@ -622,7 +624,25 @@ app.post('/get-registro-test', async (req, res) => {
             $('.allItem0L1').css('background-color',colorBackgeround1[colorL1G]);
             $('.allItem0L1').css('border','1px solid '+colorBorde[colorL1G]);
         }
+        function borrarRegistros(){
 
+            
+            $.ajax({
+               url: "http://localhost:3000/delete-documents",
+               type: "POST",
+               contentType: "application/json",
+               data: JSON.stringify({coleccion:'estado_test'}),
+               success: function(response) {
+                    
+                    console.log(response);
+
+                },
+               error: function(xhr, status, error) {
+                    console.error("Error al realizar ejecucion de test:", error);
+               }
+            });
+            
+        }
       </script>
 
 </body>
