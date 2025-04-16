@@ -168,7 +168,7 @@
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
-
+        var dataLogProcG = [];
                 
 
 
@@ -436,12 +436,12 @@
             }
         }
         var contGProcess=0;
-
+        var contwatchdog = 0;
         function ejecutarListaProcess(){
             if(estadoColaProc == 'available' && arrListFeaturesProc.length > 0 ){
                 if(contGProcess <= (arrListFeaturesProc.length-1)){
                 console.log('entro en ejecutarListaProcess concontGProcess:'+contGProcess);
-                estadoColaProc='bussy';
+                estadoColaProc='bussy';                
                 ejecutarFeature(arrListFeaturesProc[contGProcess]);
                 console.log('arrListFeaturesProc[contGProcess]:'+arrListFeaturesProc[contGProcess]);
                 }else{
@@ -476,19 +476,30 @@
                     success: function(response) {
                             
                         console.log('response:',response);
+                        var addErrorTime = false;
+                        if(contwatchdog >= 10)addErrorTime=true;
                         if(response.registro.estado=='procesando'){
 
-                            hiloLatenciaG = setTimeout(latenciaEjecucion, 2000); // Ejecutar cada 2 segundos
-                        }else{
+                            hiloLatenciaG = setTimeout(latenciaEjecucion, 3000); // Ejecutar cada 4 segundos
+                        }
+                        if(response.registro.estado!='procesando' || addErrorTime){
                             estadoColaProc = 'available';
                             if(response.registro.estado=='completado')estadoRespuesta=0;
+                            if(response.registro.estado=='error')estadoRespuesta=2;
+                            if(addErrorTime){
+                                estadoRespuesta=1;
+                                response.registro.logs.push('Espera de tiempo agotada');
+                            }
+                            dataLogProcG.push(response.registro);
                             showIconItemResultado(estadoRespuesta,contGProcess);
+                            armarLogInforme();
                             contGProcess++;
                             ejecutarListaProcess();
 
                         }
                         //latenciaEjecucion();
 
+                        contwatchdog++;
 
                     },
                     error: function(xhr, status, error) {
@@ -526,12 +537,9 @@
                data: JSON.stringify(postData),
                success: function(response) {
                     
-/*
-app.post('/get-registro-test', async (req, res) => {
-    const { uuid } = req.body;
 
-*/
                     uuidG = response.respS.uuid;
+                    contwatchdog = 0;
                     latenciaEjecucion();
 
 
@@ -642,6 +650,37 @@ app.post('/get-registro-test', async (req, res) => {
                }
             });
             
+        }
+        function armarLogInforme(){
+            var strHtml='';
+
+            /*
+       const colorBorde = [
+            "#b5dbfc", // Celeste
+            "#4adb01", // Verde
+            "#8900c9", // Violeta
+            "#ff891b", // Naranja
+            "#ff2424", // Rojo
+            "#ddb814", // Amarillo
+            "#3f3f3f"  // Gris
+        ];
+            */
+            /*
+            for (var i = 0; i < dataLogProcG.length; i++) {
+            var idEl = 'item1P-' + i;
+            var item = dataLogProcG[i];
+            var strHtmlIcon0 = '<div id="item1Ic0P-'+i+'" class="item1IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
+            var strHtmlIcon1 = '<div id="item1Ic1P-'+i+'" class="item1IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
+            var strHtmlIcon2 = '<div id="item1Ic2P-'+i+'" class="item1IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
+
+
+            $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                item +               
+                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button>'+strHtmlIcon0+strHtmlIcon1+strHtmlIcon2+'</div>');
+                
+        }    
+*/
+
         }
       </script>
 
