@@ -3,7 +3,15 @@ const { chromium } = require('@playwright/test');
 
 Given('que el usuario navega a {string}', async function (url) {
   console.log(`[STEP START] Navegando a la URL: ${url}`);
-  this.browser = await chromium.launch(); // Hereda configuración `headless` de playwright.config.js
+
+  this.browser = await chromium.launch({ 
+    headless: false,
+    args: ['--disable-gpu', '--start-maximized', '--disable-dev-shm-usage']
+  }); // Hereda configuración `headless` de playwright.config.js
+
+
+
+  
   this.page = await this.browser.newPage();
   await this.page.goto(url);
   console.log(`[STEP END] Navegación completada.`);
@@ -17,8 +25,10 @@ When('el usuario hace click en {string} button', async function (buttonName) {
 });
 
 When('luego de unos segundos ingresas sus credenciales', async function () {
+  this.setTimeout(20000);
   console.log(`[STEP START] Ingresando credenciales.`);
-  await this.page.waitForTimeout(4000);
+  //await this.page.waitForTimeout(5000);
+  await new Promise(resolve => setTimeout(resolve, 4000));
   await this.page.waitForSelector('#username', { timeout: 10000 });
   await this.page.fill('#username', 'pt304596@gmail.com');
   console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);

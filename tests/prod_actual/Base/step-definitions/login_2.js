@@ -2,7 +2,7 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { chromium } = require('@playwright/test');
 
 Given('que el usuario navega a {string}', async function (url) {
-  this.browser = await chromium.launch({ headless: false }); // Cambia headless a false
+  this.browser = await chromium.launch(); // Cambia headless a false
   this.page = await this.browser.newPage();
   await this.page.goto(url);
 });

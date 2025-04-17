@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -8,6 +7,10 @@ const port = 3000;
 
 const { initializeApp } = require("firebase/app");
 const { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } = require("firebase/firestore");
+// Endpoint ya existente para ejecutar tests
+const { exec } = require('child_process');
+const { chromium } = require('playwright');
+
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -29,17 +32,15 @@ var vercionPathG='';
 app.use(cors());
 app.use(express.json());
 
-// Endpoint ya existente para ejecutar tests
-app.post('/run-tests', async (req, res) => {
 
+
+app.post('/run-tests', async (req, res) => {
     // Generamos un UUID para la ejecución
     const uuid = `${req.body.fileName}_${Date.now()}`;
     req.body.uuid = uuid;
     var errorDB = true;
 
     try {
- 
-
         // Guardamos en Firebase el estado "procesando"
         await setDoc(doc(db, "estado_test", uuid), {
             name_feature: req.body.fileName,
@@ -52,40 +53,46 @@ app.post('/run-tests', async (req, res) => {
             uuid: uuid
         });
         errorDB = false;
-        //res.json({ message: "Test iniciado", uuid });
-
     } catch (error) {
         console.error("Error al registrar estado en Firebase:", error);
-        res.status(500).json({ error: "Error al registrar estado en Firebase" });
+        return res.status(500).json({ error: "Error al registrar estado en Firebase" });
     }
 
-    if(!errorDB){
+    if (!errorDB) {
+        // Eliminamos instancias previas de Chromium para evitar bloqueos en headless
+        // En Windows, usa taskkill
+        exec('taskkill /F /IM chromium.exe /T', (err, stdout, stderr) => {
+            if (err) console.error('Error al intentar cerrar instancias previas de Chromium:', err);
+        });
 
-    validarArchivos(req.body);
-    var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
+        validarArchivos(req.body);
 
-         
-    const { chromium } = require('playwright');
+        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
 
-    exec(command, async (error, stdout, stderr) => {
-        const browser = await chromium.launch(); // Abres el navegador
-   
-        try {
-            // Tu lógica actual para ejecutar los tests
-            resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
-        } catch (err) {
-            console.error('Error durante la ejecución:', err);
-        } finally {
-            await browser.close(); // Asegúrate de que el navegador se cierra siempre
-        }
-    });    
+        exec(command, async (error, stdout, stderr) => {
+            let browser;
 
+            try {
+                browser = await chromium.launch({ headless: true, args: ['--disable-gpu', '--no-sandbox'] });
+                const context = await browser.newContext();
+                const page = await context.newPage();
+
+                // Tu lógica actual para ejecutar los tests
+                resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
+
+            } catch (err) {
+                console.error('Error durante la ejecución:', err);
+            } finally {
+                if (browser) await browser.close();
+            }
+        });
 
         var resp = req.body;
         resp.errorDB = errorDB;
         res.json({ respS: resp });
     }
 });
+
 
 
 app.post('/get-registro-test', async (req, res) => {
