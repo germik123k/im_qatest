@@ -61,10 +61,11 @@ app.post('/run-tests', async (req, res) => {
     if (!errorDB) {
         // Eliminamos instancias previas de Chromium para evitar bloqueos en headless
         // En Windows, usa taskkill
+        /*
         exec('taskkill /F /IM chromium.exe /T', (err, stdout, stderr) => {
             if (err) console.error('Error al intentar cerrar instancias previas de Chromium:', err);
         });
-
+        */
         validarArchivos(req.body);
 
         var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;

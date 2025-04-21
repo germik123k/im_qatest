@@ -5,7 +5,7 @@ Given('que el usuario navega a {string}', async function (url) {
   console.log(`[STEP START] Navegando a la URL: ${url}`);
 
   this.browser = await chromium.launch({ 
-    headless: false,
+    headless: true,
     args: ['--disable-gpu', '--start-maximized', '--disable-dev-shm-usage']
   }); // Hereda configuración `headless` de playwright.config.js
 
@@ -24,11 +24,9 @@ When('el usuario hace click en {string} button', async function (buttonName) {
   console.log(`[STEP END] Click completado en el botón: ${buttonName}`);
 });
 
-When('luego de unos segundos ingresas sus credenciales', async function () {
-  this.setTimeout(20000);
+When('luego de unos segundos ingresas sus credenciales', {timeout: 10000}, async function () {
   console.log(`[STEP START] Ingresando credenciales.`);
-  //await this.page.waitForTimeout(5000);
-  await new Promise(resolve => setTimeout(resolve, 4000));
+  await this.page.waitForTimeout(6000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
   await this.page.fill('#username', 'pt304596@gmail.com');
   console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);

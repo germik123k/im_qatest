@@ -46,20 +46,15 @@
                     <!-- Bloque de búsqueda -->
                     <label for="searchInput" class="mb-0 mr-2">Búsqueda:</label>
                     <input type="text" id="searchInput" class="form-control form-control-sm" style="width: 80px;" placeholder="Buscar">
-                    <button class="btn btn-secondary btn-sm ml-2" id="searchButton">
+                    <button class="btn btn-secondary btn-sm ml-2" id="searchButton" onclick="updateList();">
                         <i class="fa fa-refresh" aria-hidden="true"></i>
                     </button>
 
                     <!-- Bloque de categoría -->
                     <label for="categorySelect" class="mb-0 ml-3 mr-2">Categoría:</label>
-                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;" onchange="colorizarItem();">
-                        <option value="0">Color 1</option>
-                        <option value="1">Color 2</option>
-                        <option value="2">Color 3</option>
-                        <option value="3">Color 4</option>
-                        <option value="4">Color 5</option>
-                        <option value="5">Color 6</option>
-                        <option value="6">Color 7</option>
+                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;">
+                        <option value="0">Todas</option>
+
                     </select>
                     <button class="btn btn-secondary btn-sm ml-2" id="categoryButton">
                         <i class="fa fa-refresh" aria-hidden="true"></i>
@@ -165,6 +160,7 @@
         var uuidG =''; //registro procesandose
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
+
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
@@ -374,17 +370,17 @@
         function updateList() {
     limpiarContFiles();
         var classItems = 'allItem0';
-
+        var textSearch = $('#searchInput').val();
 
         for (var i = 0; i < arrListFeatures.length; i++) {
             var idEl = 'item0-' + i;
             var idSpinnerContainer = 'item0C-' + i;
             var item = arrListFeatures[i];
-
-
+            if (item.includes(textSearch)) {
             $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
                 item +
                 '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+            }
         }
 
         for (var i = 0; i < arrListFeaturesProc.length; i++) {
@@ -652,48 +648,77 @@
             });
             
         }
-        function armarLogInforme(){
-            var strHtml='';
+        function armarLogInforme() {
+            var strHtml = '';
             $("#reportProcess").empty();
-            /*
-       const colorBorde = [
-            "#b5dbfc", // Celeste
-            "#4adb01", // Verde
-            "#8900c9", // Violeta
-            "#ff891b", // Naranja
-            "#ff2424", // Rojo
-            "#ddb814", // Amarillo
-            "#3f3f3f"  // Gris
-        ];
-            */
-              var classItems = 'allItem1';
-               var colorSel = 1;
+
+            var classItems = 'allItem1';
+            var colorSel = 1;
+
             for (var i = 0; i < dataLogProcG.length; i++) {
-            var idEl = 'item1P-' + i;
-            var item = dataLogProcG[i].name_feature;
-            var strHtmlIcon = '';
-           
-            if(dataLogProcG[i].estado == "completado"){
-                strHtmlIcon = '<div id="item1Ic0P-'+i+'" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
-                colorSel = 1;
-             }
-            if(dataLogProcG[i].estado == "procesando"){
-                strHtmlIcon = '<div id="item1Ic1P-'+i+'" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
-                colorSel = 5;
+                var idEl = 'item1P-' + i;
+                var item = dataLogProcG[i].name_feature;
+                var strHtmlIcon = '';
+                var idLogDiv = 'logDiv-' + i;
+
+                if (dataLogProcG[i].estado == "completado") {
+                    strHtmlIcon = '<div id="item1Ic0P-' + i + '" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
+                    colorSel = 1;
+                }
+                if (dataLogProcG[i].estado == "procesando") {
+                    strHtmlIcon = '<div id="item1Ic1P-' + i + '" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
+                    colorSel = 5;
+                }
+                if (dataLogProcG[i].estado == "error") {
+                    strHtmlIcon = '<div id="item1Ic2P-' + i + '" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
+                    colorSel = 4;
+                }
+
+                var logContent = dataLogProcG[i].logs ? dataLogProcG[i].logs.join("<br>-") : "Sin registros";
+
+                $("#reportProcess").append(
+                    '<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorSel] + '; border:1px solid ' + colorBorde[colorSel] + '; padding-left:2px; margin-top:3px;" >' +
+                        '<button onclick="toggleLog(\'' + idLogDiv + '\');" class="btn btn-light btn-sm mr-2" style="float:left; height:24px; width:22px; padding:0px;"><i class="fa fa-chevron-down" aria-hidden="true"></i></button>' +
+                        item +
+                        '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button>' +
+                        strHtmlIcon +
+                    '</div>' +
+                    '<div id="' + idLogDiv + '" class="logContent" style="display:none; padding-left:10px; border:1px solid ' + colorBorde[colorSel] + ';">' + formatearLog(logContent) + '</div>'
+                );
             }
-            if(dataLogProcG[i].estado == "error"){
-                 strHtmlIcon = '<div id="item1Ic2P-'+i+'" class="item1IcPAll" style="display:inline-block; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
-                colorSel = 4;
-            }
-
-            $("#reportProcess").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorSel] + '; border:1px solid '+colorBorde[colorSel]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" >' +
-                item +               
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button>'+strHtmlIcon+'</div>');
-                
-        }    
-
-
         }
+
+        function toggleLog(id) {
+            $("#" + id).slideToggle(300);
+        }
+
+
+
+        function formatearLog(logContent) {
+    if (!logContent) return "Sin registros";
+
+    // Reemplazar etiquetas con saltos de línea y formato claro
+    return logContent
+        .replace(/Feature:/g, "📌 **Feature:**")  
+        .replace(/Scenario:/g, "<br>🔹 **Scenario:**")  
+        .replace(/Given/g, "<br>🟢 **Given:**")  
+        .replace(/When/g, "<br>🟠 **When:**")  
+        .replace(/Then/g, "<br>🔵 **Then:**")  
+        .replace(/And/g, "<br>➕ **And:**")  
+        .replace(/\[STEP START\]/g, "<br>🚀 [STEP START]")  
+        .replace(/\[STEP END\]/g, "<br>✅ [STEP END]")  
+        .replace(/\[INFO\]/g, "<br>ℹ️ [INFO]")  
+        .replace(/\[SUCCESS\]/g, "<br>🎯 [SUCCESS]")  
+        .replace(/(\d+ scenario \(\d+ passed\))/g, "<br>📊 **Resumen:** $1")  
+        .replace(/(\d+ steps \(\d+ passed\))/g, "<br>📌 **Pasos ejecutados:** $1")  
+        .replace(/(executing steps: [\d\.]+s)/g, "<br>⏳ **Tiempo total:** $1")  
+        .replace(/# tests\\/g, "<br>🗂️ Archivo: tests\\") // Mejor visibilidad
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); // Hacer URLs clickeables
+}
+
+
+
+
       </script>
 
 </body>
