@@ -22,8 +22,6 @@
         }
 
 
-       
-
     </style>
 </head>
 <body>
@@ -134,24 +132,31 @@
 
     <!-- Modal -->
     <div class="modal fade" id="fileModal" tabindex="-1" role="dialog" aria-labelledby="fileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="fileModalLabel">Contenido del Archivo</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileModalLabel">Contenido del Archivo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="fileContent" style="white-space: pre-wrap;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+            </div>
         </div>
-        <div class="modal-body">
-            <pre id="fileContent" style="white-space: pre-wrap;"></pre>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-        </div>
-        </div>
-    </div>
     </div>
   
+
+
+
+
+
+
+
 
     <script>
         var idFeatureSel0G = '';
@@ -160,7 +165,7 @@
         var uuidG =''; //registro procesandose
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
-
+        var objParamFeature = {};
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
@@ -197,6 +202,7 @@
                     
                     arrListFeatures = [];
                     arrListFeatures = response.test;
+                    objParamFeature = response.parametros;
                     updateList();
                     var strHtml = '';
                     response.versiones.forEach(function(vercion) {
@@ -234,6 +240,79 @@
             });
         }
 
+        function editarParametros(fileFeature) {
+    // Cambiar el título del modal
+    $("#fileModalLabel").text("Editar Parámetros: " + fileFeature);
+
+    // Crear el contenido para editar parámetros usando una tabla con encabezado
+    let contentHtml = `
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Valor</th>
+                    <th>Aleatorio</th>
+                    <th>Size</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (objParamFeature[fileFeature]) {
+        var keysParam = Object.keys(objParamFeature[fileFeature]);
+
+        for (var i = 0; i < keysParam.length; i++) {
+            var paramName = keysParam[i];
+            var value = objParamFeature[fileFeature][keysParam[i]];
+            var maxChars = 50;
+
+            contentHtml += `
+                <tr>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${paramName}" disabled />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${value}" />
+                    </td>
+                    <td>
+                        <select class="form-control form-control-sm">
+                            <option value="desactivado" selected>Desactivado</option>
+                            <option value="nombre">Nombre</option>
+                            <option value="apellido">Apellido</option>
+                            <option value="pais">País</option>
+                            <option value="ciudad">Ciudad</option>
+                            <option value="texto">Texto</option>
+                            <option value="trabajos">Trabajos</option>
+                            <option value="universidad">Universidad</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm" value="${maxChars}" max="100" />
+                    </td>
+                </tr>
+            `;
+        }
+    } else {
+        contentHtml += `
+            <tr>
+                <td colspan="4" class="text-center text-danger">
+                    No hay parámetros disponibles para este archivo.
+                </td>
+            </tr>
+        `;
+    }
+
+    contentHtml += `
+            </tbody>
+        </table>
+    `;
+
+    // Cambiar el contenido del modal
+    $("#fileContent").html(contentHtml);
+
+    // Mostrar el modal
+    $("#fileModal").modal("show");
+}
         //--FUNCIONES VARIAS--//
         function overElementItem(idEl, classItems ){
 
@@ -329,6 +408,7 @@
             }
             });
         }
+        
         function moverFeatureAll(aProcesar) {
             if (!aProcesar) {
                 // Mover todos los elementos de arrListFeatures a arrListFeaturesProc en el orden original
@@ -368,36 +448,45 @@
             updateList(); // Actualizamos la UI
         }
         function updateList() {
-    limpiarContFiles();
-        var classItems = 'allItem0';
-        var textSearch = $('#searchInput').val();
+            limpiarContFiles();
+            var classItems = 'allItem0';
+            var textSearch = $('#searchInput').val();
+            var strHtmlBtnParam = '';
 
-        for (var i = 0; i < arrListFeatures.length; i++) {
-            var idEl = 'item0-' + i;
-            var idSpinnerContainer = 'item0C-' + i;
-            var item = arrListFeatures[i];
-            if (item.includes(textSearch)) {
-            $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
-                item +
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button></div>');
+            for (var i = 0; i < arrListFeatures.length; i++) {
+                var idEl = 'item0-' + i;
+                var idSpinnerContainer = 'item0C-' + i;
+                var item = arrListFeatures[i];
+
+                strHtmlBtnParam = '';
+                if (objParamFeature[item] != undefined) {
+                    strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
+                }
+
+                if (item.includes(textSearch)) {
+                    $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                        item + 
+                        '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + '</div>');
+                }
+            }
+
+            for (var i = 0; i < arrListFeaturesProc.length; i++) {
+                var idEl = 'item0P-' + i;
+                var idSpinnerContainer = 'item0CP-' + i;
+                var item = arrListFeaturesProc[i];
+                strHtmlBtnParam='';
+                if (objParamFeature[item] != undefined) {
+                    strHtmlBtnParam = '<button onclick="conParam(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
+                }
+                var strHtmlIcon0 = '<div id="item0Ic0P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
+                var strHtmlIcon1 = '<div id="item0Ic1P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
+                var strHtmlIcon2 = '<div id="item0Ic2P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
+
+                $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                    item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>' +                
+                    '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + strHtmlIcon0 + strHtmlIcon1 + strHtmlIcon2 + '</div>');
             }
         }
-
-        for (var i = 0; i < arrListFeaturesProc.length; i++) {
-            var idEl = 'item0P-' + i;
-            var idSpinnerContainer = 'item0CP-' + i;
-            var item = arrListFeaturesProc[i];
-            var strHtmlIcon0 = '<div id="item0Ic0P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
-            var strHtmlIcon1 = '<div id="item0Ic1P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
-            var strHtmlIcon2 = '<div id="item0Ic2P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
-
-
-            $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
-                item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>'+                
-                '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;"><i class="fa fa-eye" aria-hidden="true"></i></button>'+strHtmlIcon0+strHtmlIcon1+strHtmlIcon2+'</div>');
-                
-        }
-    }
 
 
         function limpiarContFiles(){

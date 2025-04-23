@@ -121,7 +121,12 @@ app.post('/get-registro-test', async (req, res) => {
 });
 
 
-// Nuevo endpoint para listar archivos en la carpeta de features
+
+
+
+
+/*
+// Endpoint para listar archivos en la carpeta de features
 app.post('/list-files', (req, res) => {
 
     const env = req.body.env || 'prod_actual';
@@ -177,6 +182,80 @@ app.post('/list-files', (req, res) => {
             });
     });
 });
+*/
+
+
+
+
+app.post('/list-files', (req, res) => {
+    const env = req.body.env || 'prod_actual';
+    const version = req.body.version || 'Base';
+
+    const dirPath = path.join(__dirname, 'tests', env, 'Base/features');
+    const dirPath2 = path.join(__dirname, 'tests', env);
+
+    let directorios = [];
+    let objectParam = {}; // Almacena los parámetros agrupados por archivo
+    let arryFiles = [];
+
+    fs.readdir(dirPath2, async (err, items) => {
+        if (err) {
+            console.error(`Error al leer el directorio ${dirPath2}:`, err);
+            return res.status(500).send({ error: "Error al leer el directorio" });
+        }
+
+        const statPromises = items.map(item => {
+            let itemPath = path.join(dirPath2, item);
+            return new Promise((resolve, reject) => {
+                fs.stat(itemPath, (err, stats) => {
+                    if (err) return reject(err);
+                    if (stats.isDirectory()) directorios.push(item);
+                    resolve();
+                });
+            });
+        });
+
+        try {
+            await Promise.all(statPromises);
+
+            fs.readdir(dirPath, async (err, files) => {
+                if (err) {
+                    console.error(`Error al leer el directorio ${dirPath}:`, err);
+                    return res.status(500).send({ error: "Error al leer el directorio de tests" });
+                }
+
+                for (let file of files) {
+                    if (file.endsWith('.feature')) {
+                        arryFiles.push(file);
+
+                        const fileContent = fs.readFileSync(path.join(dirPath, file), 'utf-8');
+
+                        // Extraer comentarios con parámetros (Ejemplo: #PARAMS: {"user":"juan", "pass":"abc123"})
+                        const paramMatches = fileContent.match(/#PARAMS:(.*)/g);
+                        if (paramMatches) {
+                            objectParam[file] = {}; // Asegurar clave en objectParam
+                            paramMatches.forEach(param => {
+                                try {
+                                    const parsedParam = JSON.parse(param.replace('#PARAMS:', '').trim());
+                                    objectParam[file]=parsedParam;
+                                } catch (error) {
+                                    console.error(`Error al parsear parámetros en ${file}:`, error);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                res.json({ test: arryFiles, versiones: directorios, parametros: objectParam });
+            });
+
+        } catch (error) {
+            console.error("Error en la lectura de archivos o directorios:", error);
+            res.status(500).send({ error: "Error obteniendo datos" });
+        }
+    });
+});
+
 
 
 app.post('/read-file-feature', (req, res) => {

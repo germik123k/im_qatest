@@ -1,3 +1,6 @@
+#PARAMS: {"user":"juan", "pass":"abc123"}
+
+
 Feature: Login
 
 Scenario: Hacer login en Intramed
