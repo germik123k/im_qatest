@@ -26,18 +26,51 @@
 </head>
 <body>
     <div class="container">
-        <div class="row mb-3 mt-1" id="encabezado">
+
+        <div class="row mb-3 mt-1 text-center" id="encabezado">
             <div class="col">
                 <img src="./logo_intramed 2.png" style="width: 170px;" alt="Logo" class="logo-img">
             </div>
-            <div class="col text-right">
-                <button class="btn btn-secondary btn-sm">Login</button>
-                <button class="btn btn-secondary btn-sm" onclick="borrarRegistros();">Borrar Registros <i class="fa fa-trash" aria-hidden="true"></i>
+            <div class="col d-flex align-items-center justify-content-center">
+                <h3 style="color: #4a4a4a; font-weight: bold;">QA AUTOMATION TOOL</h3>
+            </div>
+            <div class="col text-right d-flex align-items-center justify-content-end">
+                <!-- Nombre del usuario -->
+                <label id="userName" class="mr-2 font-weight-bold">Admin</label>
+        
+                <!-- Botón de login -->
+                <button class="btn btn-secondary btn-sm" id="btnLogin" title="Login">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                </button>
+        
+                <!-- Botón de borrar registros -->
+                <button class="btn btn-secondary btn-sm ml-2" onclick="borrarRegistros();">
+                    Borrar Registros <i class="fa fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
+        
+        
 
-        <!-- Nuevo row para búsqueda optimizado -->
+
+
+        <div class="row mb-3">
+            <div class="col">
+                <div class="d-flex align-items-center search-box">
+                        <label for="workspaceSelect" class="mr-2">Espacio de trabajo:</label>
+                        <select id="workspaceSelect" class="form-control form-control-sm mr-1" style="width: 160px;">
+                            <option value="default">Seleccionar...</option>
+                        </select>
+                        <button class="btn btn-danger btn-sm mr-3" id="btnEliminarEspacio">
+                            <i class="fa fa-trash" aria-hidden="true"></i>
+                        </button>
+                        <input type="text" id="workspaceName" class="form-control form-control-sm mr-1" placeholder="Nombre del espacio" style="width: 160px;">
+                        <button class="btn btn-primary btn-sm mr-2" id="btnGuardarEspacio">
+                            <i class="fa fa-save" aria-hidden="true"></i>
+                        </button>
+                </div>
+            </div>
+        </div>
         <div class="row mb-3" id="busqueda">
             <div class="col">
                 <div class="d-flex align-items-center search-box">
@@ -83,9 +116,10 @@
                     </button>
 
                 </div>
+                <!-- Contenedor para la nueva sección con el mismo estilo de fondo y borde -->
+               
             </div>
         </div>
-
 
 
         <div class="row mb-3" id="columnas">
@@ -109,9 +143,10 @@
                     </button>
                 </div>
             </div>
-            <div class="col-5" >
-                <div class="file-list bg-light border" id="fileList2">
-                </div>
+            <div class="col-5">
+                <div class="file-list bg-light border" id="fileList2"></div>
+            
+
             </div>
             <div class="col-1 text-center">
                 <div class="d-flex flex-column">
@@ -134,21 +169,23 @@
     <div class="modal fade" id="fileModal" tabindex="-1" role="dialog" aria-labelledby="fileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="fileModalLabel">Contenido del Archivo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <pre id="fileContent" style="white-space: pre-wrap;"></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-            </div>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileModalLabel">Contenido del Archivo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="fileContent" style="white-space: pre-wrap;"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnGuardar" style="display: none;" onclick="guardarParamFeature();">Guardar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
+
   
 
 
@@ -166,14 +203,16 @@
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
         var objParamFeature = {};
+        var objParamFeature2 = {};
+
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
         var dataLogProcG = [];
-                
+        var featureParamG = {};
 
 
-
+        var espacioTrabajo = {user:'admin', espacioName:'', objParamFeature:{}, objParamFeature2:{}};
 
 
 
@@ -203,6 +242,7 @@
                     arrListFeatures = [];
                     arrListFeatures = response.test;
                     objParamFeature = response.parametros;
+                    
                     updateList();
                     var strHtml = '';
                     response.versiones.forEach(function(vercion) {
@@ -241,79 +281,144 @@
         }
 
         function editarParametros(fileFeature) {
-    // Cambiar el título del modal
-    $("#fileModalLabel").text("Editar Parámetros: " + fileFeature);
+            $("#fileModalLabel").text("Editar Parámetros: " + fileFeature);
+            featureParamG = { feature: fileFeature, param: {} };
 
-    // Crear el contenido para editar parámetros usando una tabla con encabezado
-    let contentHtml = `
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Aleatorio</th>
-                    <th>Size</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+            let contentHtml = `
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Parámetro</th>
+                            <th>Valor</th>
+                            <th>Aleatorio</th>
+                            <th>Max Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-    if (objParamFeature[fileFeature]) {
-        var keysParam = Object.keys(objParamFeature[fileFeature]);
+            if (objParamFeature[fileFeature]) {
+                var keysParam = Object.keys(objParamFeature[fileFeature]);
 
-        for (var i = 0; i < keysParam.length; i++) {
-            var paramName = keysParam[i];
-            var value = objParamFeature[fileFeature][keysParam[i]];
-            var maxChars = 50;
+                for (var i = 0; i < keysParam.length; i++) {
+                    var paramName = keysParam[i];
+
+                    // Obtener datos de objParamFeature2 si existen
+                    let paramData = objParamFeature2[fileFeature]?.[paramName] || {};
+                    let value = paramData.value ?? objParamFeature[fileFeature][paramName];
+                    let selectValue = paramData.select ?? "desactivado";
+                    let checkboxChecked = paramData.chbx ?? false;
+                    let maxChars = paramData.sizeMax ?? 50;
+
+                    var checkboxId = 'modCboxMSize' + i;
+                    var inputMSId = 'modInpMSize' + i;
+                    var inputValId = 'modInpValue' + i;
+                    var selecId = 'modSel' + i;
+
+                    featureParamG.param[keysParam[i]] = {
+                        value: inputValId,
+                        selec: selecId,
+                        checkbox: checkboxId,
+                        inputMaxSize: inputMSId
+                    };
+
+                    contentHtml += `
+                        <tr>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" value="${paramName}" disabled />
+                            </td>
+                            <td>
+                                <input type="text" id="${inputValId}" class="form-control form-control-sm" value="${value}" />
+                            </td>
+                            <td>
+                                <select id="${selecId}" class="form-control form-control-sm">
+                                    <option value="desactivado" ${selectValue === "desactivado" ? "selected" : ""}>Desactivado</option>
+                                    <option value="nombre" ${selectValue === "nombre" ? "selected" : ""}>Nombre</option>
+                                    <option value="apellido" ${selectValue === "apellido" ? "selected" : ""}>Apellido</option>
+                                    <option value="pais" ${selectValue === "pais" ? "selected" : ""}>País</option>
+                                    <option value="ciudad" ${selectValue === "ciudad" ? "selected" : ""}>Ciudad</option>
+                                    <option value="texto" ${selectValue === "texto" ? "selected" : ""}>Texto</option>
+                                    <option value="trabajos" ${selectValue === "trabajos" ? "selected" : ""}>Trabajos</option>
+                                    <option value="universidad" ${selectValue === "universidad" ? "selected" : ""}>Universidad</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <input type="checkbox" id="${checkboxId}" class="mr-2" onclick="disableMaxSize('${i}', '${fileFeature}');" ${checkboxChecked ? "checked" : ""} />
+                                    <input type="number" id="${inputMSId}" class="form-control form-control-sm" value="${maxChars}" max="100000" ${checkboxChecked ? "" : "disabled"} />
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } else {
+                contentHtml += `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            No hay parámetros disponibles para este archivo.
+                        </td>
+                    </tr>
+                `;
+            }
 
             contentHtml += `
-                <tr>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" value="${paramName}" disabled />
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm" value="${value}" />
-                    </td>
-                    <td>
-                        <select class="form-control form-control-sm">
-                            <option value="desactivado" selected>Desactivado</option>
-                            <option value="nombre">Nombre</option>
-                            <option value="apellido">Apellido</option>
-                            <option value="pais">País</option>
-                            <option value="ciudad">Ciudad</option>
-                            <option value="texto">Texto</option>
-                            <option value="trabajos">Trabajos</option>
-                            <option value="universidad">Universidad</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm" value="${maxChars}" max="100" />
-                    </td>
-                </tr>
+                    </tbody>
+                </table>
             `;
+
+            $("#fileContent").html(contentHtml);
+
+            // Mostrar el modal y activar el botón de guardar
+            $("#btnGuardar").css("display", "inline-block");
+            $("#fileModal").modal("show");
         }
-    } else {
-        contentHtml += `
-            <tr>
-                <td colspan="4" class="text-center text-danger">
-                    No hay parámetros disponibles para este archivo.
-                </td>
-            </tr>
-        `;
-    }
 
-    contentHtml += `
-            </tbody>
-        </table>
-    `;
 
-    // Cambiar el contenido del modal
-    $("#fileContent").html(contentHtml);
-
-    // Mostrar el modal
-    $("#fileModal").modal("show");
-}
         //--FUNCIONES VARIAS--//
+        function guardarParamFeature() {
+            let fileFeature = featureParamG.feature;
+
+            if (!fileFeature) {
+                console.error("Error: No se ha definido el archivo de feature.");
+                return;
+            }
+
+            if (!objParamFeature2[fileFeature]) {
+                objParamFeature2[fileFeature] = {};
+            }
+
+            Object.keys(featureParamG.param).forEach(paramName => {
+                let paramData = featureParamG.param[paramName];
+
+                let value = $("#" + paramData.value).val();
+                let select = $("#" + paramData.selec).val();
+                let checkbox = $("#" + paramData.checkbox).prop("checked");
+                let sizeMax = $("#" + paramData.inputMaxSize).val();
+
+                objParamFeature2[fileFeature][paramName] = {
+                    value: value || '',
+                    select: select || 'desactivado',
+                    chbx: checkbox,
+                    sizeMax: sizeMax ? parseInt(sizeMax) : 50
+                };
+            });
+
+            console.log("Parámetros guardados:", objParamFeature2[fileFeature]);
+
+            // Cerrar el modal solo después de guardar exitosamente
+            $("#fileModal").modal("hide");
+        }
+
+
+        function disableMaxSize(idEl, feature){
+            var checkboxId = 'modCboxMSize' + idEl;
+            var inputMSId = 'modInpMSize' + idEl;
+            console.log('entro ok');
+            $('#' + checkboxId).on('change', function() {
+                $('#' + inputMSId).prop('disabled', !this.checked);
+            });
+        }
+
         function overElementItem(idEl, classItems ){
 
             $('.item0IcPAll').css('display','none');
@@ -387,28 +492,91 @@
         }
 
         function obtenerFeature(fileFeature) {
-            updateEntornoVersion();   
+            updateEntornoVersion();
             var postData={fileName:fileFeature, env: entornoG, version: versionG};
             console.log('postData:',postData);
+
             $.ajax({
-            url: "http://localhost:3000/read-file-feature",
-            type: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(postData),
-            success: function(response) {
-                if (response.fileLines) {
-                    $("#fileContent").html(response.fileLines.join('<br>'));
-                    $("#fileModal").modal("show");
-                } else {
-                    console.error("Error: respuesta sin contenido válido");
-                }
-            },
-            error: function(xhr, status, error) {
+                url: "http://localhost:3000/read-file-feature",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(postData),
+                success: function(response) {
+                    if (response.fileLines) {
+                        $("#fileContent").html(response.fileLines.join('<br>'));
+
+                        // Asegurar que el botón Guardar esté oculto en este caso
+                        $("#btnGuardar").css("display", "none");
+
+                        $("#fileModal").modal("show");
+                    } else {
+                        console.error("Error: respuesta sin contenido válido");
+                    }
+                },
+                error: function(xhr, status, error) {
                     console.error("Error al obtener el contenido del archivo:", error);
-            }
+                }
             });
         }
-        
+
+        function grabarEspacioTrabajo() {
+            $.ajax({
+                url: "http://localhost:3000/save-work-space",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(espacioTrabajo),
+                success: function(response) {
+                    console.log("Espacio de trabajo guardado exitosamente:", response);
+                    alert("Espacio de trabajo guardado con éxito!");
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al guardar espacio de trabajo:", error);
+                    alert("Error al guardar espacio de trabajo.");
+                }
+            });
+        }
+
+        function cargarEspacioTrabajo(espacioName) {
+            $.ajax({
+                url: "http://localhost:3000/load-work-space",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ espacioName: espacioName }),
+                success: function(response) {
+                    if (response) {
+                        espacioTrabajo = response;
+                        console.log("Espacio de trabajo cargado:", espacioTrabajo);
+                        alert("Espacio de trabajo cargado correctamente!");
+                    } else {
+                        alert("No se encontró el espacio de trabajo.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al cargar espacio de trabajo:", error);
+                    alert("Error al cargar espacio de trabajo.");
+                }
+            });
+        }
+                
+        function eliminarEspacioTrabajo(espacioName) {
+            $.ajax({
+                url: "http://localhost:3000/delete-work-space",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ espacioName: espacioName }),
+                success: function(response) {
+                    console.log("Espacio de trabajo eliminado:", response);
+                    alert("Espacio de trabajo eliminado exitosamente!");
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al eliminar espacio de trabajo:", error);
+                    alert("Error al eliminar espacio de trabajo.");
+                }
+            });
+        }
+
+
+
         function moverFeatureAll(aProcesar) {
             if (!aProcesar) {
                 // Mover todos los elementos de arrListFeatures a arrListFeaturesProc en el orden original
@@ -476,7 +644,7 @@
                 var item = arrListFeaturesProc[i];
                 strHtmlBtnParam='';
                 if (objParamFeature[item] != undefined) {
-                    strHtmlBtnParam = '<button onclick="conParam(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
+                    strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
                 }
                 var strHtmlIcon0 = '<div id="item0Ic0P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
                 var strHtmlIcon1 = '<div id="item0Ic1P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
@@ -804,8 +972,6 @@
         .replace(/# tests\\/g, "<br>🗂️ Archivo: tests\\") // Mejor visibilidad
         .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); // Hacer URLs clickeables
 }
-
-
 
 
       </script>
