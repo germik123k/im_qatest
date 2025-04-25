@@ -5,8 +5,14 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
+
+
 const { initializeApp } = require("firebase/app");
-const { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } = require("firebase/firestore");
+const { getFirestore, query, where, doc, setDoc, getDoc, collection, addDoc, getDocs, updateDoc, deleteDoc } = require("firebase/firestore");
+
+
+
+
 // Endpoint ya existente para ejecutar tests
 const { exec } = require('child_process');
 const { chromium } = require('playwright');
@@ -303,6 +309,145 @@ app.post('/delete-documents', async (req, res) => {
         res.status(500).json({ error: "Error al eliminar documentos en Firebase." });
     }
 });
+
+
+
+app.post("/load-work-space", async (req, res) => {
+    try {
+        const { espacioName } = req.body;
+
+        // Validación básica
+        if (!espacioName || espacioName === "default") {
+            return res.status(400).send({ error: "El nombre del espacio de trabajo no es válido." });
+        }
+
+        // Referencia a la colección de Firebase
+        const workspaceCollection = collection(db, "espacio_de_trabajo");
+
+        // Consulta filtrada para encontrar el espacio de trabajo por nombre
+        const q = query(workspaceCollection, where("workspaceName", "==", espacioName));
+        const querySnapshot = await getDocs(q);
+
+        // Verificar si se encontró el espacio de trabajo
+        if (querySnapshot.empty) {
+            return res.status(404).send({ message: "No se encontró el espacio de trabajo." });
+        }
+
+        // Obtener el primer documento encontrado (Firebase permite varios, pero trabajaremos con uno)
+        const workspaceData = querySnapshot.docs[0].data();
+
+        // Responder con los datos del espacio de trabajo
+        res.status(200).send(workspaceData);
+    } catch (error) {
+        console.error("Error al cargar espacio de trabajo:", error);
+        res.status(500).send({ error: "Hubo un error al cargar el espacio de trabajo." });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+app.post("/save-work-space", async (req, res) => {
+    try {
+        const {
+            workspaceName,
+            entorno,
+            version,
+            user,
+            objParamFeature,
+            objParamFeature2,
+            arrListFeaturesProc,
+            arrListFeatures
+        } = req.body;
+
+        // Validación básica de datos
+        if (!workspaceName || workspaceName.length < 3 || workspaceName.length > 50) {
+            return res.status(400).send({ error: "El nombre del espacio de trabajo no es válido." });
+        }
+
+        // Referencia a la colección en Firebase
+        const workspaceCollection = collection(db, "espacio_de_trabajo");
+
+        // Optimización: Buscar y eliminar documentos duplicados usando una consulta filtrada
+        const q = query(workspaceCollection, where("workspaceName", "==", workspaceName));
+        const querySnapshot = await getDocs(q);
+
+        // Eliminar documentos duplicados si existen
+        for (const doc of querySnapshot.docs) {
+            await deleteDoc(doc.ref);
+            console.log(`Espacio de trabajo duplicado eliminado: ${doc.id}`);
+        }
+
+        // Crear el nuevo objeto para guardar en Firebase
+        const workspaceData = {
+            workspaceName,
+            entorno,
+            version,
+            user,
+            objParamFeature: JSON.parse(objParamFeature), // Parsear de texto a objeto
+            objParamFeature2: JSON.parse(objParamFeature2), // Parsear de texto a objeto
+            arrListFeaturesProc: JSON.parse(arrListFeaturesProc), // Parsear de texto a array
+            arrListFeatures: JSON.parse(arrListFeatures), // Parsear de texto a array
+            timestamp: new Date().toISOString() // Agregar marca de tiempo
+        };
+
+        // Guardar el nuevo espacio de trabajo
+        const docRef = await addDoc(workspaceCollection, workspaceData);
+
+        // Enviar respuesta exitosa
+        res.status(200).send({ message: "Espacio de trabajo guardado exitosamente.", id: docRef.id });
+    } catch (error) {
+        console.error("Error al guardar espacio de trabajo:", error);
+        res.status(500).send({ error: "Hubo un error al guardar el espacio de trabajo." });
+    }
+});
+
+
+
+
+
+app.post("/get-workspaces", async (req, res) => {
+    try {
+        const { user } = req.body;
+
+        // Validación básica
+        if (!user) {
+            return res.status(400).send({ error: "El usuario no fue proporcionado." });
+        }
+
+        // Referencia a la colección de Firebase
+        const workspaceCollection = collection(db, "espacio_de_trabajo");
+
+        // Consulta filtrada para obtener los espacios de trabajo del usuario
+        const q = query(workspaceCollection, where("user", "==", user));
+        const querySnapshot = await getDocs(q);
+
+        // Recopilar los nombres de espacios de trabajo
+        const workspaceNames = [];
+        querySnapshot.forEach((doc) => {
+            workspaceNames.push(doc.data().workspaceName);
+        });
+
+        // Responder con los nombres de espacios de trabajo
+        if (workspaceNames.length > 0) {
+            res.status(200).send(workspaceNames);
+        } else {
+            res.status(404).send({ message: "No se encontraron espacios de trabajo para este usuario." });
+        }
+    } catch (error) {
+        console.error("Error al obtener espacios de trabajo:", error);
+        res.status(500).send({ error: "Hubo un error al obtener los espacios de trabajo." });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

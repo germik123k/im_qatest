@@ -27,22 +27,27 @@
 <body>
     <div class="container">
 
-        <div class="row mb-3 mt-1 text-center" id="encabezado">
-            <div class="col">
+        <div class="row mb-3 mt-1" id="encabezado">
+            <!-- Columna para el logo alineado a la izquierda -->
+            <div class="col d-flex align-items-center justify-content-start">
                 <img src="./logo_intramed 2.png" style="width: 170px;" alt="Logo" class="logo-img">
             </div>
+        
+            <!-- Columna para el título centrado -->
             <div class="col d-flex align-items-center justify-content-center">
                 <h3 style="color: #4a4a4a; font-weight: bold;">QA AUTOMATION TOOL</h3>
             </div>
-            <div class="col text-right d-flex align-items-center justify-content-end">
+        
+            <!-- Columna para los elementos alineados a la derecha -->
+            <div class="col d-flex align-items-center justify-content-end">
                 <!-- Nombre del usuario -->
                 <label id="userName" class="mr-2 font-weight-bold">Admin</label>
-        
+                
                 <!-- Botón de login -->
                 <button class="btn btn-secondary btn-sm" id="btnLogin" title="Login">
                     <i class="fa fa-user" aria-hidden="true"></i>
                 </button>
-        
+                
                 <!-- Botón de borrar registros -->
                 <button class="btn btn-secondary btn-sm ml-2" onclick="borrarRegistros();">
                     Borrar Registros <i class="fa fa-trash" aria-hidden="true"></i>
@@ -58,14 +63,19 @@
             <div class="col">
                 <div class="d-flex align-items-center search-box">
                         <label for="workspaceSelect" class="mr-2">Espacio de trabajo:</label>
-                        <select id="workspaceSelect" class="form-control form-control-sm mr-1" style="width: 160px;">
+                        <select id="workspaceSelect" class="form-control form-control-sm" style="width: 160px;">
                             <option value="default">Seleccionar...</option>
                         </select>
+
+                        <button class="btn btn-secondary btn-sm " id="btnGetEspacio" onclick="cargarEspacioTrabajo();">
+                            <i class="fa fa-sign-in" aria-hidden="true"></i>
+                        </button>
+
                         <button class="btn btn-danger btn-sm mr-3" id="btnEliminarEspacio">
                             <i class="fa fa-trash" aria-hidden="true"></i>
                         </button>
                         <input type="text" id="workspaceName" class="form-control form-control-sm mr-1" placeholder="Nombre del espacio" style="width: 160px;">
-                        <button class="btn btn-primary btn-sm mr-2" id="btnGuardarEspacio">
+                        <button class="btn btn-primary btn-sm mr-2" id="btnGuardarEspacio" onclick="grabarEspacioTrabajo();">
                             <i class="fa fa-save" aria-hidden="true"></i>
                         </button>
                 </div>
@@ -210,9 +220,9 @@
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
         var dataLogProcG = [];
         var featureParamG = {};
+        var user = 'admin';
 
-
-        var espacioTrabajo = {user:'admin', espacioName:'', objParamFeature:{}, objParamFeature2:{}};
+ //   var espacioTrabajo = {user:'admin', workspaceName:'',version:'', objParamFeature:'', objParamFeature2:''};
 
 
 
@@ -520,6 +530,41 @@
         }
 
         function grabarEspacioTrabajo() {
+            // Variables iniciales
+            var espacioTrabajo = {
+                user: 'admin', 
+                workspaceName: '', 
+                version: '', 
+                objParamFeature: '', 
+                objParamFeature2: '', 
+                arrListFeaturesProc: ''
+            };
+
+            // Validar el nombre del espacio de trabajo
+            var workspaceName = $('#workspaceName').val();
+            if (workspaceName.length < 3 || workspaceName.length > 50) {
+                alert("El nombre del espacio de trabajo debe tener entre 3 y 50 caracteres.");
+                return; // Salir si no cumple
+            }
+            espacioTrabajo.workspaceName = workspaceName;
+
+            // Capturar el entorno
+            var entorno = $('#environmentSelect').val();
+            espacioTrabajo.entorno = entorno;
+
+            // Capturar la versión
+            var version = $('#versionSelect').val();
+            espacioTrabajo.version = version;
+
+            // Parsear objParamFeature y objParamFeature2 a texto
+            espacioTrabajo.objParamFeature = JSON.stringify(objParamFeature);
+            espacioTrabajo.objParamFeature2 = JSON.stringify(objParamFeature2);
+
+            // Recopilar lista de archivos procesados
+            espacioTrabajo.arrListFeaturesProc = JSON.stringify(arrListFeaturesProc);
+            espacioTrabajo.arrListFeatures = JSON.stringify(arrListFeatures);
+
+            // Enviar a backend por AJAX
             $.ajax({
                 url: "http://localhost:3000/save-work-space",
                 type: "POST",
@@ -536,7 +581,8 @@
             });
         }
 
-        function cargarEspacioTrabajo(espacioName) {
+        function cargarEspacioTrabajo() {
+            var espacioName = $('#workspaceSelect').val();
             $.ajax({
                 url: "http://localhost:3000/load-work-space",
                 type: "POST",
@@ -544,8 +590,29 @@
                 data: JSON.stringify({ espacioName: espacioName }),
                 success: function(response) {
                     if (response) {
+                        // Asignar el espacio de trabajo cargado
                         espacioTrabajo = response;
                         console.log("Espacio de trabajo cargado:", espacioTrabajo);
+
+                        // Configurar el entorno
+                        $('#environmentSelect').val(espacioTrabajo.entorno);
+
+                        // Configurar la versión
+                        $('#versionSelect').val(espacioTrabajo.version);
+
+                        // Reconstruir parámetros predeterminados en objParamFeature
+                        objParamFeature = espacioTrabajo.objParamFeature;
+
+                        // Reconstruir parámetros modificados en objParamFeature2
+                        objParamFeature2 =espacioTrabajo.objParamFeature2;
+
+                        // Reconstruir lista de archivos
+                        arrListFeatures =espacioTrabajo.arrListFeatures || '[]'; // Archivos por procesar
+                        arrListFeaturesProc =espacioTrabajo.arrListFeaturesProc || '[]'; // Archivos procesados
+
+                        // Actualizar la interfaz
+                        updateList();
+
                         alert("Espacio de trabajo cargado correctamente!");
                     } else {
                         alert("No se encontró el espacio de trabajo.");
@@ -574,7 +641,33 @@
                 }
             });
         }
-
+        function obtenerEspaciosDeTrabajo() {
+            $.ajax({
+                url: "http://localhost:3000/get-workspaces",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ user: user }), // Enviar el usuario actual
+                success: function(response) {
+                    if (response && response.length > 0) {
+                        // Limpiar el select antes de llenarlo
+                        $('#workspaceSelect').empty();
+                        $('#workspaceSelect').append('<option value="default">Seleccionar...</option>');
+                        
+                        // Llenar el select con los nombres de espacios de trabajo
+                        response.forEach(function(workspaceName) {
+                            $('#workspaceSelect').append(`<option value="${workspaceName}">${workspaceName}</option>`);
+                        });
+                        console.log("Espacios de trabajo cargados:", response);
+                    } else {
+                        alert("No se encontraron espacios de trabajo para este usuario.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al obtener espacios de trabajo:", error);
+                    alert("Error al obtener los espacios de trabajo.");
+                }
+            });
+        }
 
 
         function moverFeatureAll(aProcesar) {
@@ -972,7 +1065,9 @@
         .replace(/# tests\\/g, "<br>🗂️ Archivo: tests\\") // Mejor visibilidad
         .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); // Hacer URLs clickeables
 }
-
+window.onload = function() {
+    obtenerEspaciosDeTrabajo(); // Llamar al método para obtener y llenar el select
+};
 
       </script>
 
