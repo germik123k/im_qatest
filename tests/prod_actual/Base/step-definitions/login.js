@@ -5,7 +5,7 @@ Given('que el usuario navega a {string}', async function (url) {
   console.log(`[STEP START] Navegando a la URL: ${url}`);
 
   this.browser = await chromium.launch({ 
-    headless: true,
+    headless: false,
     args: ['--disable-gpu', '--start-maximized', '--disable-dev-shm-usage']
   }); // Hereda configuración `headless` de playwright.config.js
 

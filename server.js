@@ -68,8 +68,8 @@ app.post('/run-tests', async (req, res) => {
     
         validarArchivos(req.body);
 
-        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/prod_actual/${vercionPathG}/features/${fileFeatureG}`;
-
+        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${fileFeatureG}`;
+        console.log(command);
         exec(command, async (error, stdout, stderr) => {
             let browser;
 
