@@ -10,33 +10,46 @@ Given('que el usuario navega a {string}', async function (url) {
   }); // Hereda configuración `headless` de playwright.config.js
 
 
-
   
   this.page = await this.browser.newPage();
   await this.page.goto(url);
   console.log(`[STEP END] Navegación completada.`);
 });
 
-When('el usuario hace click en {string} button', async function (buttonName) {
+When('el usuario hace click en {string} button', {timeout: 10000}, async function (buttonName) {
   console.log(`[STEP START] Haciendo click en el botón: ${buttonName}`);
   await this.page.waitForTimeout(2000); 
   await this.page.click(`button:has-text("${buttonName}")`);
   console.log(`[STEP END] Click completado en el botón: ${buttonName}`);
 });
 
-When('luego de unos segundos ingresas sus credenciales', {timeout: 10000}, async function () {
+When('luego de unos segundos ingresas sus credenciales', {timeout: 20000}, async function () {
   console.log(`[STEP START] Ingresando credenciales.`);
-  await this.page.waitForTimeout(6000);
+  await this.page.waitForTimeout(5000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
   await this.page.fill('#username', 'pt304596@gmail.com');
   console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);
   await this.page.waitForSelector('#password', { timeout: 10000 });
   await this.page.fill('#password', 'Maradona86.');
+  await this.page.waitForSelector('#username', { timeout: 10000 });
+  await this.page.fill('#username', 'pt304596@gmail.com');  
   console.log(`[INFO] Contraseña ingresada.`);
   console.log(`[STEP END] Credenciales ingresadas.`);
 });
+When('y puede visualizar la imagen de su perfil', {timeout: 10000}, async function () {
+  console.log(`[STEP START] Validando la imagen de perfil.`);
+  await this.page.waitForSelector('img[alt="user-profile-img"]', { timeout: 10000 });
+  const profileImage = await this.page.$('img[alt="user-profile-img"]');
+  if (profileImage) {
+    console.log(`[SUCCESS] Imagen de perfil encontrada: Inicio de sesión exitoso.`);
+  } else {
+    console.error(`[ERROR] Imagen de perfil no encontrada: Las credenciales no eran correctas.`);
+  }
+  console.log(`[STEP END] Se validó la imagen de perfil.`);
+});
 
-When('y realiza click en {string}', async function (buttonName) {
+
+When('y realiza click en {string}', {timeout: 10000}, async function (buttonName) {
   console.log(`[STEP START] Realizando click en: ${buttonName}`);
   await this.page.click(`button:has-text("${buttonName}")`);
   console.log(`[STEP END] Click realizado en: ${buttonName}`);
@@ -44,16 +57,6 @@ When('y realiza click en {string}', async function (buttonName) {
   await this.page.evaluate(() => {
     window.location.href = "https://intramed-front-qa.conexa.ai/profile/gemikle";
   });
-});
-When('y puede visualizar la imagen de su perfil de vuelta en la home', async function () {
-  console.log(`[STEP START] Validando la imagen de perfil en la home.`);
-  const profileImage = await this.page.$('img[alt="user-profile-img"]');
-  if (profileImage) {
-    console.log(`[SUCCESS] Imagen de perfil encontrada: Inicio de sesión exitoso.`);
-  } else {
-    console.error(`[ERROR] Imagen de perfil no encontrada: Las credenciales no eran correctas.`);
-  }
-  console.log(`[STEP END] Se valido la imagen de perfil en la home.`);
 });
 
 When('el usuario modifica la URL a {string}', {timeout: 10000}, async function (newUrl) {
@@ -65,30 +68,94 @@ When('el usuario modifica la URL a {string}', {timeout: 10000}, async function (
   });
   console.log(`[STEP END] Cambio de URL completado.`);
 });
-
-When('el usuario hace click en el botón de edición de perfil', {timeout: 10000}, async function () {
-  console.log(`[STEP START] Haciendo click en el botón de edición.`);
-  await this.page.waitForTimeout(4000);
-  await this.page.click('button:has(svg.feather-edit-2)');
-  console.log(`[STEP END] Click en edición de perfil completado.`);
+Then('el usuario espera unos segundos E1', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando unos segundos.`);
+  await this.page.waitForTimeout(5000);
+  console.log(`[STEP END] Tiempo de espera completado.`);
 });
 
-When('el usuario hace click en la zona de carga de imagen', {timeout: 10000}, async function () {
-  console.log(`[STEP START] Haciendo click en la zona de carga.`);
+When('el usuario hace click en el botón de edición de perfil', { timeout: 15000 }, async function () {
+  console.log(`[STEP START] Esperando a que el botón de edición de perfil esté disponible.`);
+  
+  await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/button', { timeout: 12000 }); // Espera el botón específico dentro del contenedor
+  await this.page.waitForTimeout(2000); // Breve pausa para evitar fallos por carga
+
+  console.log(`[STEP START] Click en el botón de edición de perfil.`);
+  await this.page.click('xpath=/html/body/div[2]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/button');
+  console.log(`[STEP END] Click realizado en el botón de edición.`);
+});
+
+
+
+Then('el usuario espera unos segundos E2', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando unos segundos.`);
+  await this.page.waitForTimeout(5000);
+  console.log(`[STEP END] Tiempo de espera completado.`);
+});
+
+When('el usuario abre el modal de carga de imagen', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Apertura del modal de carga de imagen.`);
   await this.page.waitForTimeout(3000);
-  await this.page.click('div[role="button"]');
-  console.log(`[STEP END] Click en zona de carga completado.`);
+
+  // Esperamos que el div con role=button exista
+  await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[1]', { timeout: 10000 });
+
+  console.log(`[STEP START] Click en el modal de carga de imagen.`);
+  await this.page.click('xpath=/html/body/div[9]/div/div/div/div[1]');
+  console.log(`[STEP END] Modal abierto.`);
 });
 
-When('el usuario selecciona la imagen {string} desde su escritorio', {timeout: 10000}, async function (imagePath) {
-  console.log(`[STEP START] Subiendo imagen: ${imagePath}`);
-  await this.page.waitForTimeout(3000);
-  await this.page.setInputFiles('input[type="file"]', imagePath);
-  console.log(`[STEP END] Imagen subida correctamente.`);
+Then('el usuario espera unos segundos E3', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando unos segundos.`);
+  await this.page.waitForTimeout(5000);
+  console.log(`[STEP END] Tiempo de espera completado.`);
 });
 
-Then('el usuario espera {int} segundos', async function (seconds) {
-  console.log(`[STEP START] Esperando ${seconds} segundos.`);
-  await this.page.waitForTimeout(seconds * 1000);
-  console.log(`[STEP END] Espera completada.`);
+When('el usuario selecciona la imagen {string} desde su escritorio', { timeout: 15000 }, async function (imageName) {
+  console.log(`[STEP START] Esperando el evento filechooser para seleccionar imagen: ${imageName}`);
+
+  // Interceptamos el evento filechooser y anulamos la necesidad de abrir la ventana
+  const [fileChooser] = await Promise.all([
+    this.page.waitForEvent('filechooser'),
+    this.page.click('xpath=/html/body/div[9]/div/div/div/div[1]'), // Click en el botón activador
+  ]);
+
+  console.log(`[INFO] FileChooser detectado. Subiendo archivo sin abrir ventana...`);
+//  const filePath = `C:/Users/GermanMikle/Desktop/img_test.png`;
+  const filePath = `./resources/img_profile/1.png`;
+
+  
+  await fileChooser.setFiles(filePath); // Evitar que aparezca la ventana
+
+  /*
+  const inputFile = await fileChooser.element();
+  await this.page.waitForTimeout(2000);
+
+  await inputFile.evaluate((el) => el.showPicker());
+  await this.page.waitForTimeout(500); // Breve espera
+  await this.page.keyboard.press('Escape'); // Cierra el dialogo manualmente
+  */
+  
+  
+  console.log(`[STEP END] Imagen seleccionada sin mostrar el file chooser.`);
 });
+
+When('el usuario hace click en el botón guardar', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando a que el botón "Guardar" esté disponible.`);
+
+  await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[2]/div/button[2]', { timeout: 8000 }); // Esperamos que aparezca el botón
+  await this.page.waitForTimeout(1000); // Breve pausa para estabilidad
+
+  console.log(`[STEP START] Haciendo click en el botón "Guardar".`);
+  await this.page.click('xpath=/html/body/div[9]/div/div/div/div[2]/div/button[2]');
+  console.log(`[STEP END] Click realizado en el botón "Guardar".`);
+});
+
+
+Then('el usuario espera unos segundos E4', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando unos segundos.`);
+  await this.page.waitForTimeout(5000);
+  console.log(`[STEP END] Tiempo de espera completado.`);
+  await this.browser.close();
+});
+
