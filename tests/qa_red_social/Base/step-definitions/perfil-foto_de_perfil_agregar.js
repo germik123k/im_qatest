@@ -1,19 +1,63 @@
+
 const { Given, When, Then } = require('@cucumber/cucumber');
 const { chromium } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
-Given('que el usuario navega a {string}', async function (url) {
-  console.log(`[STEP START] Navegando a la URL: ${url}`);
-  process.stdout.write(`[STEP START] test...\n`);
-  this.browser = await chromium.launch({ 
-    headless: false,
-    args: ['--disable-gpu', '--start-maximized', '--disable-dev-shm-usage']
-  }); // Hereda configuración `headless` de playwright.config.js
+// Antes de ejecutar un test, cargar los parámetros desde el .json
+const jsonFilePath = path.join(__dirname, '../features/perfil-foto_de_perfil_agregar.json');
+let worldParameters;
+
+try {
+    worldParameters = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    console.log("[LOAD] Parámetros cargados:", worldParameters);
+} catch (error) {
+    console.error(`[LOAD] Error al cargar el archivo JSON (${jsonFilePath}):`, error);
+    worldParameters = {}; // Default vacío si hay error
+}
+
+// Puedes usar `worldParameters` en tus steps
+Given('que el usuario navega a {string}', { timeout: 10000 }, async function (url) {
+    console.log(`[STEP START] Navegando a la URL: ${url}`);
+    this.browser = await chromium.launch({
+        headless: false,
+        args: ['--disable-gpu', '--disable-dev-shm-usage']
+    }); // Hereda configuración `headless` de playwright.config.js
+
+      // Crear una nueva ventana (contexto de página)
+        const context = await this.browser.newContext({
+          viewport: null // Esto desactiva el tamaño predeterminado y permite maximizar
+      });
 
 
-  
-  this.page = await this.browser.newPage();
-  await this.page.goto(url);
-  console.log(`[STEP END] Navegación completada.`);
+    
+    
+    this.page = await this.browser.newPage();
+
+
+      // Ajustar el tamaño del viewport dinámicamente al tamaño del contenido
+      const { width, height } = await this.page.evaluate(() => {
+        return {
+            width: window.innerWidth, // Ancho interno del contenido
+            height: window.innerHeight // Alto interno del contenido
+        };
+    });
+    await this.page.setViewportSize({ width, height });
+
+
+    
+    await this.page.goto(url);
+
+    // Leer el parámetro `urlImagen` desde `worldParameters`
+/*
+    if (worldParameters.urlImagen) {
+        console.log(`[DEBUG] URL Imagen utilizada: ${worldParameters.urlImagen}`);
+    } else {
+        console.log(`[DEBUG] URL Imagen no está definida.`);
+    }
+*/
+    console.log(`[STEP END] Navegación completada.`);
+    //await this.browser.close();
 });
 
 When('el usuario hace click en {string} button', {timeout: 10000}, async function (buttonName) {
@@ -121,8 +165,9 @@ When('el usuario selecciona la imagen {string} desde su escritorio', { timeout: 
   ]);
 
   console.log(`[INFO] FileChooser detectado. Subiendo archivo sin abrir ventana...`);
-//  const filePath = `C:/Users/GermanMikle/Desktop/img_test.png`;
-  const filePath = `./resources/img_profile/1.png`;
+  //const filePath = `C:/Users/GermanMikle/Desktop/img_test.png`;
+  let filePath ='./resources/img_profile/'+worldParameters.urlImagen+'.png';
+  
 
   
   await fileChooser.setFiles(filePath); // Evitar que aparezca la ventana

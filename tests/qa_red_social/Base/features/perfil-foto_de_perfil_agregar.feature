@@ -1,4 +1,4 @@
-#PARAMS: {"urlImagen":"./resources/img_profile/1.png"}
+#PARAMS: {"urlImagen":"7"}
 
 Feature: Subir Imagen de Perfil
 

@@ -86,14 +86,14 @@
                 <div class="d-flex align-items-center search-box">
                     <!-- Bloque de búsqueda -->
                     <label for="searchInput" class="mb-0 mr-2">Búsqueda:</label>
-                    <input type="text" id="searchInput" class="form-control form-control-sm" style="width: 80px;" placeholder="Buscar">
+                    <input type="text" id="searchInput" class="form-control form-control-sm" style="width: 80px;" placeholder="Buscar" onkeypress="updateList();" oninput="updateList();">
                     <button class="btn btn-secondary btn-sm ml-2" id="searchButton" onclick="updateList();">
                         <i class="fa fa-refresh" aria-hidden="true"></i>
                     </button>
 
                     <!-- Bloque de categoría -->
                     <label for="categorySelect" class="mb-0 ml-3 mr-2">Categoría:</label>
-                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;">
+                    <select id="categorySelect" class="form-control form-control-sm" style="width: 140px;" onchange="updateList();">
                         <option value="0">Todas</option>
 
                     </select>
@@ -221,7 +221,7 @@
         var dataLogProcG = [];
         var featureParamG = {};
         var user = 'admin';
-
+        var catSelect = 'todas';
  //   var espacioTrabajo = {user:'admin', workspaceName:'',version:'', objParamFeature:'', objParamFeature2:''};
 
 
@@ -252,9 +252,25 @@
                     arrListFeatures = [];
                     arrListFeatures = response.test;
                     objParamFeature = response.parametros;
-                    
-                    updateList();
+                    var categorias = {};
+                    for (var i = 0; i < arrListFeatures.length; i++) {
+                        var strCat = arrListFeatures[i].split('-');
+                        categorias[strCat[0]] = false;
+                    }
                     var strHtml = '';
+                    strHtml += `<option value="todas">todas</option>`;
+
+                    // Generar opciones HTML para el select
+                    Object.keys(categorias).forEach((key) => {
+                        // Los valores serán siempre "true"
+                        strHtml += `<option value="${key}">${key}</option>`;
+                    });
+
+                    console.log(strHtml);
+                    $("#categorySelect").html(strHtml);
+
+                    updateList();
+                    strHtml = '';
                     response.versiones.forEach(function(vercion) {
                         strHtml+='<option value="'+vercion+'">'+vercion+'</option>';
                     });
@@ -713,21 +729,24 @@
             var classItems = 'allItem0';
             var textSearch = $('#searchInput').val();
             var strHtmlBtnParam = '';
-
+            catSelect = $("#categorySelect").val();
             for (var i = 0; i < arrListFeatures.length; i++) {
-                var idEl = 'item0-' + i;
-                var idSpinnerContainer = 'item0C-' + i;
-                var item = arrListFeatures[i];
+                var itemCat = arrListFeatures[i].split('-')[0];
+                if(catSelect == 'todas' || catSelect == itemCat || catSelect == ''){
+                    var idEl = 'item0-' + i;
+                    var idSpinnerContainer = 'item0C-' + i;
+                    var item = arrListFeatures[i];
 
-                strHtmlBtnParam = '';
-                if (objParamFeature[item] != undefined) {
-                    strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
-                }
+                    strHtmlBtnParam = '';
+                    if (objParamFeature[item] != undefined) {
+                        strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
+                    }
 
-                if (item.includes(textSearch)) {
-                    $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
-                        item + 
-                        '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + '</div>');
+                    if (item.includes(textSearch)) {
+                        $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                            item + 
+                            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + '</div>');
+                    }
                 }
             }
 
@@ -773,6 +792,7 @@
 
                     // Configurar el estado inicial y crear un setTimeout
                     estadoColaProc = 'available';
+                    $("#reportProcess").empty();
                     ejecutarListaProcess();
                 }
             }else{
@@ -867,40 +887,36 @@
             }
 
         }
-        function ejecutarFeature(fileFeature){
-
-
-
+        function ejecutarFeature(fileFeature) {
             updateEntornoVersion();
             activarSpinnerProcess(); 
-/*
-objParamFeature: '', 
-objParamFeature2: '', 
-*/
-            var postData={fileName:fileFeature, env: entornoG, version: versionG, user: 'admin'};
 
+            // Validar que los objetos existan antes de asignarlos
+            var postData = {
+                fileName: fileFeature,
+                env: entornoG,
+                version: versionG,
+                user: 'admin',
+                parametros: {
+                    objParamFeature: objParamFeature[fileFeature] || {}, // Asignar objeto vacío si no existe
+                    objParamFeature2: objParamFeature2[fileFeature] || {} // Asignar objeto vacío si no existe
+                }
+            };
 
-            
             $.ajax({
-               url: "http://localhost:3000/run-tests",
-               type: "POST",
-               contentType: "application/json",
-               data: JSON.stringify(postData),
-               success: function(response) {
-                    
-
+                url: "http://localhost:3000/run-tests",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(postData),
+                success: function(response) {
                     uuidG = response.respS.uuid;
                     contwatchdog = 0;
                     latenciaEjecucion();
-
-
                 },
-               error: function(xhr, status, error) {
+                error: function(xhr, status, error) {
                     console.error("Error al realizar ejecucion de test:", error);
-               }
+                }
             });
-            
-
         }
         function showIconItemResultado(result,item){
             $('#item0Ic'+result+'P-'+item+'').css('display', 'inline-block');
@@ -1053,7 +1069,7 @@ objParamFeature2: '',
 
     // Reemplazar etiquetas con saltos de línea y formato claro
     return logContent
-        .replace(/Feature:/g, "📌 **Feature:**")  
+        .replace(/Feature:/g, "<br>📌 **Feature:**")  
         .replace(/Scenario:/g, "<br>🔹 **Scenario:**")  
         .replace(/Given/g, "<br>🟢 **Given:**")  
         .replace(/When/g, "<br>🟠 **When:**")  
@@ -1063,12 +1079,15 @@ objParamFeature2: '',
         .replace(/\[STEP END\]/g, "<br>✅ [STEP END]")  
         .replace(/\[INFO\]/g, "<br>ℹ️ [INFO]")  
         .replace(/\[SUCCESS\]/g, "<br>🎯 [SUCCESS]")  
+        .replace(/\[LOAD\]/g, "<br>📥 **[LOAD]**") // Formato para [LOAD]
         .replace(/(\d+ scenario \(\d+ passed\))/g, "<br>📊 **Resumen:** $1")  
         .replace(/(\d+ steps \(\d+ passed\))/g, "<br>📌 **Pasos ejecutados:** $1")  
         .replace(/(executing steps: [\d\.]+s)/g, "<br>⏳ **Tiempo total:** $1")  
         .replace(/# tests\\/g, "<br>🗂️ Archivo: tests\\") // Mejor visibilidad
         .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>'); // Hacer URLs clickeables
 }
+
+
 window.onload = function() {
     obtenerEspaciosDeTrabajo(); // Llamar al método para obtener y llenar el select
 };

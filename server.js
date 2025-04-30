@@ -40,14 +40,14 @@ app.use(express.json());
 
 
 
+
 app.post('/run-tests', async (req, res) => {
-    // Generamos un UUID para la ejecución
     const uuid = `${req.body.fileName}_${Date.now()}`;
     req.body.uuid = uuid;
-    var errorDB = true;
+    let errorDB = true;
 
     try {
-        // Guardamos en Firebase el estado "procesando"
+        // Guardar el estado "procesando" en Firebase
         await setDoc(doc(db, "estado_test", uuid), {
             name_feature: req.body.fileName,
             estado: "procesando",
@@ -65,22 +65,32 @@ app.post('/run-tests', async (req, res) => {
     }
 
     if (!errorDB) {
-    
         validarArchivos(req.body);
 
-        var command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${fileFeatureG}`;
+        const objParamFeature = req.body.parametros.objParamFeature;
+        const objParamFeature2 = req.body.parametros.objParamFeature2;
+
+        const finalParams = Object.keys(objParamFeature2).length > 0 ? objParamFeature2 : objParamFeature;
+
+        // Guardar parámetros en un archivo .json con el mismo nombre que el .feature
+        const jsonFileName = path.join(__dirname, `./tests/${req.body.env}/${vercionPathG}/features/${req.body.fileName.replace('.feature', '.json')}`);
+        fs.writeFileSync(jsonFileName, JSON.stringify(finalParams, null, 2), 'utf8');
+        console.log(`Parámetros guardados en: ${jsonFileName}`);
+
+        // Construir el comando sin --world-parameters
+        const command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${fileFeatureG}`;
         console.log(command);
+
+        // Ejecutar el comando
         exec(command, async (error, stdout, stderr) => {
             let browser;
-
             try {
                 browser = await chromium.launch({ headless: true, args: ['--disable-gpu', '--no-sandbox'] });
                 const context = await browser.newContext();
                 const page = await context.newPage();
 
-                // Tu lógica actual para ejecutar los tests
+                // Lógica actual para ejecutar los tests
                 resultadoDeTest(req.body.uuid, req.body.fileName, error, stdout, stderr);
-
             } catch (err) {
                 console.error('Error durante la ejecución:', err);
             } finally {
@@ -88,13 +98,11 @@ app.post('/run-tests', async (req, res) => {
             }
         });
 
-        var resp = req.body;
+        const resp = req.body;
         resp.errorDB = errorDB;
         res.json({ respS: resp });
     }
 });
-
-
 
 app.post('/get-registro-test', async (req, res) => {
     const { uuid } = req.body;
