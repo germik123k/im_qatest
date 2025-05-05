@@ -56,8 +56,12 @@ app.post('/run-tests', async (req, res) => {
             ambiente: req.body.env,
             version: req.body.version,
             logs: [],
-            uuid: uuid
+            uuid: uuid,
+            progreso: 0, // Iniciamos en 0% de completitud
+            step_actual: "Inicializando test...", // Indica el inicio del proceso
+            timestamp: new Date().toISOString() // Marca de tiempo inicial
         });
+        
         errorDB = false;
     } catch (error) {
         console.error("Error al registrar estado en Firebase:", error);
@@ -70,8 +74,8 @@ app.post('/run-tests', async (req, res) => {
         const objParamFeature = req.body.parametros.objParamFeature;
         const objParamFeature2 = req.body.parametros.objParamFeature2;
 
-        const finalParams = Object.keys(objParamFeature2).length > 0 ? objParamFeature2 : objParamFeature;
-
+        let finalParams = Object.keys(objParamFeature2).length > 0 ? objParamFeature2 : objParamFeature;
+        finalParams.uuid = uuid;
         // Guardar parámetros en un archivo .json con el mismo nombre que el .feature
         const jsonFileName = path.join(__dirname, `./tests/${req.body.env}/${vercionPathG}/features/${req.body.fileName.replace('.feature', '.json')}`);
         fs.writeFileSync(jsonFileName, JSON.stringify(finalParams, null, 2), 'utf8');

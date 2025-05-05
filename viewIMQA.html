@@ -283,13 +283,7 @@
         }
 
 
-        // Ejecutamos changeEntorno cuando la página carga y asignamos al evento change del select de entorno
-        $(document).ready(function() {
-            changeEntorno(); // Actualizar al iniciar
-            $("#environmentSelect").on("change", changeEntorno);
-            $("#versionSelect").on("change", changeEntorno);
 
-        });
         function verFeature(idFeature){
             $.ajax({
                url: "http://localhost:3000/get_feature",
@@ -745,27 +739,53 @@
                     if (item.includes(textSearch)) {
                         $("#fileList").append('<div class="' + classItems + ' allItem0L1" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
                             item + 
-                            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + '</div>');
+                            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + '</div>');
                     }
                 }
             }
 
-            for (var i = 0; i < arrListFeaturesProc.length; i++) {
-                var idEl = 'item0P-' + i;
-                var idSpinnerContainer = 'item0CP-' + i;
-                var item = arrListFeaturesProc[i];
-                strHtmlBtnParam='';
-                if (objParamFeature[item] != undefined) {
-                    strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right;  height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
-                }
-                var strHtmlIcon0 = '<div id="item0Ic0P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
-                var strHtmlIcon1 = '<div id="item0Ic1P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
-                var strHtmlIcon2 = '<div id="item0Ic2P-'+i+'" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
 
-                $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid '+colorBorde[colorL1G]+'; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
-                    item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px; "><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>' +                
-                    '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm ml-2" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' + strHtmlBtnParam + strHtmlIcon0 + strHtmlIcon1 + strHtmlIcon2 + '</div>');
+                    for (var i = 0; i < arrListFeaturesProc.length; i++) {
+                        var idEl = 'item0P-' + i;
+                        var idSpinnerContainer = 'item0CP-' + i;
+                        var item = arrListFeaturesProc[i];
+
+                        strHtmlBtnParam = '';
+                        if (objParamFeature[item] != undefined) {
+                            strHtmlBtnParam = '<button onclick="editarParametros(\'' + item + '\');" class="btn btn-light btn-sm" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Editar parámetros de ' + item + '"><i class="fa fa-sliders" aria-hidden="true"></i></button>';
+                        }
+
+                        // ✅ NUEVOS BOTONES: Flecha arriba y Flecha abajo
+                        var strHtmlBtnUp = '<button onclick="moverUpDown('+i+', true);" class="btn btn-light btn-sm" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Mover arriba ' + item + '"><i class="fa fa-arrow-up" aria-hidden="true"></i></button>';
+                        var strHtmlBtnDown = '<button onclick="moverUpDown('+i+', false);" class="btn btn-light btn-sm" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Mover abajo ' + item + '"><i class="fa fa-arrow-down" aria-hidden="true"></i></button>';
+
+                        var strHtmlIcon0 = '<div id="item0Ic0P-' + i + '" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-check" aria-hidden="true"></i></div>';
+                        var strHtmlIcon1 = '<div id="item0Ic1P-' + i + '" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>';
+                        var strHtmlIcon2 = '<div id="item0Ic2P-' + i + '" class="item0IcPAll" style="display:none; float:right;"><i class="fa fa-times" aria-hidden="true"></i></div>';
+
+                        $("#fileList2").append('<div class="' + classItems + '" id="' + idEl + '" style="cursor:pointer; width:100%; background-color:' + colorBackgeround1[colorL1G] + '; border:1px solid ' + colorBorde[colorL1G] + '; padding-left:2px; margin-bottom:3px;" onclick="selecFeature(\'' + idEl + '\', \'' + classItems + '\');" onmouseover="overElementItem(\'' + idEl + '\', \'' + classItems + '\');" onmouseout="outElementItem(\'' + classItems + '\')">' +
+                            item + '<div id="' + idSpinnerContainer + '" class="allitem0CP" style="display:none; margin-left:5px;"><i class="fa fa-cog fa-spin"></i> <b> RUN...</b></div>' +                            
+                            '<button onclick="obtenerFeature(\'' + item + '\');" class="btn btn-light btn-sm" style="float:right; height:24px; width:22px; padding:0px; background-color: #ffffff !important; border-color: #acacac !important;" title="Ver contenido de ' + item + '"><i class="fa fa-eye" aria-hidden="true"></i></button>' +
+                            strHtmlBtnUp + strHtmlBtnDown + strHtmlBtnParam + strHtmlIcon0 + strHtmlIcon1 + strHtmlIcon2 + '</div>');
+                    }
+
+                    
+        }
+        function moverUpDown(posi, moveUp) {
+            if (moveUp) {
+                // Si el elemento está en la posición 0, no lo movemos
+                if (posi > 0) {
+                    // Intercambiamos el elemento con el anterior
+                    [arrListFeaturesProc[posi], arrListFeaturesProc[posi - 1]] = [arrListFeaturesProc[posi - 1], arrListFeaturesProc[posi]];
+                }
+            } else {
+                // Si el elemento está en la última posición, no lo movemos
+                if (posi < arrListFeaturesProc.length - 1) {
+                    // Intercambiamos el elemento con el siguiente
+                    [arrListFeaturesProc[posi], arrListFeaturesProc[posi + 1]] = [arrListFeaturesProc[posi + 1], arrListFeaturesProc[posi]];
+                }
             }
+            updateList(); // Actualizar la interfaz tras el movimiento
         }
 
 
@@ -1091,7 +1111,13 @@
 window.onload = function() {
     obtenerEspaciosDeTrabajo(); // Llamar al método para obtener y llenar el select
 };
+// Ejecutamos changeEntorno cuando la página carga y asignamos al evento change del select de entorno
+$(document).ready(function() {
+    changeEntorno(); // Actualizar al iniciar
+    $("#environmentSelect").on("change", changeEntorno);
+    $("#versionSelect").on("change", changeEntorno);
 
+});
       </script>
 
 </body>

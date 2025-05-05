@@ -5,11 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const { updateTestState } = require('../../../../utils/testStatus');
 
-
 // Antes de ejecutar un test, cargar los parámetros desde el .json
-const jsonFilePath = path.join(__dirname, '../features/perfil-foto_de_perfil_agregar.json');
+const jsonFilePath = path.join(__dirname, '../features/perfil-sobre_mi_editar.json');
 let worldParameters;
-
 try {
     worldParameters = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
     console.log("[LOAD] Parámetros cargados:", worldParameters);
@@ -17,7 +15,6 @@ try {
     console.error(`[LOAD] Error al cargar el archivo JSON (${jsonFilePath}):`, error);
     worldParameters = {}; // Default vacío si hay error
 }
-
 // Puedes usar `worldParameters` en tus steps
 Given('que el usuario navega a {string}', { timeout: 10000 }, async function (url) {
     console.log(`[STEP START] Navegando a la URL: ${url}`);
@@ -25,18 +22,11 @@ Given('que el usuario navega a {string}', { timeout: 10000 }, async function (ur
         headless: false,
         args: ['--disable-gpu', '--disable-dev-shm-usage']
     }); // Hereda configuración `headless` de playwright.config.js
-
       // Crear una nueva ventana (contexto de página)
         const context = await this.browser.newContext({
-          viewport: null // Esto desactiva el tamaño predeterminado y permite maximizar
-      });
-
-
-    
-    
+        viewport: null // Esto desactiva el tamaño predeterminado y permite maximizar
+      });    
     this.page = await this.browser.newPage();
-
-
       // Ajustar el tamaño del viewport dinámicamente al tamaño del contenido
       const { width, height } = await this.page.evaluate(() => {
         return {
@@ -44,24 +34,10 @@ Given('que el usuario navega a {string}', { timeout: 10000 }, async function (ur
             height: window.innerHeight // Alto interno del contenido
         };
     });
-    await this.page.setViewportSize({ width, height });
-
-
-    
+    await this.page.setViewportSize({ width, height });    
     await this.page.goto(url);
-
-    // Leer el parámetro `urlImagen` desde `worldParameters`
-/*
-    if (worldParameters.urlImagen) {
-        console.log(`[DEBUG] URL Imagen utilizada: ${worldParameters.urlImagen}`);
-    } else {
-        console.log(`[DEBUG] URL Imagen no está definida.`);
-    }
-*/
     console.log(`[STEP END] Navegación completada.`);
-    //await this.browser.close();
 });
-
 
 When('el usuario hace click en {string} button', { timeout: 10000 }, async function (buttonName) {
   //await updateTestState(worldParameters.uuid, `[STEP START] Haciendo click en el botón: ${buttonName}`, 30, "procesando");
@@ -97,15 +73,11 @@ When('y puede visualizar la imagen de su perfil', {timeout: 10000}, async functi
   console.log(`[STEP END] Se validó la imagen de perfil.`);
 });
 
-
 When('y realiza click en {string}', {timeout: 10000}, async function (buttonName) {
   console.log(`[STEP START] Realizando click en: ${buttonName}`);
   await this.page.click(`button:has-text("${buttonName}")`);
   console.log(`[STEP END] Click realizado en: ${buttonName}`);
   await this.page.waitForTimeout(4000);
-  await this.page.evaluate(() => {
-    window.location.href = "https://intramed-front-qa.conexa.ai/profile/gemikle";
-  });
 });
 
 When('el usuario modifica la URL a {string}', {timeout: 10000}, async function (newUrl) {
@@ -123,89 +95,65 @@ Then('el usuario espera unos segundos E1', { timeout: 10000 }, async function ()
   console.log(`[STEP END] Tiempo de espera completado.`);
 });
 
-When('el usuario hace click en el botón de edición de perfil', { timeout: 15000 }, async function () {
-  console.log(`[STEP START] Esperando a que el botón de edición de perfil esté disponible.`);
-  
-  await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/button', { timeout: 12000 }); // Espera el botón específico dentro del contenedor
-  await this.page.waitForTimeout(2000); // Breve pausa para evitar fallos por carga
-
-  console.log(`[STEP START] Click en el botón de edición de perfil.`);
-  await this.page.click('xpath=/html/body/div[2]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/button');
-  console.log(`[STEP END] Click realizado en el botón de edición.`);
+//------------------------------------------------
+When('el usuario hace click en el botón de edición de "Sobre mí"', { timeout: 10000 }, async function () {
+    console.log(`[STEP START] Click en el botón de edición de "Sobre mí".`);
+    
+    await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[1]/button', { timeout: 10000 }); // Ajusta el selector según el HTML
+    await this.page.click('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[1]/button');
+    
+    console.log(`[STEP END] Botón de edición de "Sobre mí" presionado.`);
 });
-
-
 
 Then('el usuario espera unos segundos E2', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando unos segundos.`);
-  await this.page.waitForTimeout(5000);
-  console.log(`[STEP END] Tiempo de espera completado.`);
+    console.log(`[STEP START] Esperando unos segundos.`);
+    await this.page.waitForTimeout(2000);
+    console.log(`[STEP END] Tiempo de espera completado.`);
 });
 
-When('el usuario abre el modal de carga de imagen', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Apertura del modal de carga de imagen.`);
-  await this.page.waitForTimeout(3000);
+When('el usuario escribe un texto en el campo de edición "Sobre mí"', { timeout: 10000 }, async function () {
+    console.log(`[STEP START] Ingresando texto en la sección "Sobre mí".`);
+    await this.page.waitForSelector('#textarea-about-me', { timeout: 10000 }); // Ajusta el selector
+    await this.page.fill('#textarea-about-me', worldParameters.textoSobreMi);
 
-  // Esperamos que el div con role=button exista
-  await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[1]', { timeout: 10000 });
-
-  console.log(`[STEP START] Click en el modal de carga de imagen.`);
-  await this.page.click('xpath=/html/body/div[9]/div/div/div/div[1]');
-  console.log(`[STEP END] Modal abierto.`);
+    console.log(`[STEP END] Texto ingresado en "Sobre mí".`);
 });
 
 Then('el usuario espera unos segundos E3', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando unos segundos.`);
-  await this.page.waitForTimeout(5000);
-  console.log(`[STEP END] Tiempo de espera completado.`);
+    console.log(`[STEP START] Esperando unos segundos.`);
+    await this.page.waitForTimeout(3000);
+    console.log(`[STEP END] Tiempo de espera completado.`);
 });
 
-When('el usuario selecciona la imagen {string} desde su escritorio', { timeout: 15000 }, async function (imageName) {
-  console.log(`[STEP START] Esperando el evento filechooser para seleccionar imagen: ${imageName}`);
+When('el usuario hace click en el botón "Guardar cambios"', { timeout: 10000 }, async function () {
+    console.log(`[STEP START] Guardando cambios en "Sobre mí".`);
 
-  // Interceptamos el evento filechooser y anulamos la necesidad de abrir la ventana
-  const [fileChooser] = await Promise.all([
-    this.page.waitForEvent('filechooser'),
-    this.page.click('xpath=/html/body/div[9]/div/div/div/div[1]'), // Click en el botón activador
-  ]);
+    await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[2]/button', { timeout: 10000 }); // Ajusta el selector
+    await this.page.click('xpath=/html/body/div[9]/div/div/div/div[2]/button');
 
-  console.log(`[INFO] FileChooser detectado. Subiendo archivo sin abrir ventana...`);
-  //const filePath = `C:/Users/GermanMikle/Desktop/img_test.png`;
-  let filePath ='./resources/img_profile/'+worldParameters.urlImagen+'.png';
-  
-
-  
-  await fileChooser.setFiles(filePath); // Evitar que aparezca la ventana
-
-  /*
-  const inputFile = await fileChooser.element();
-  await this.page.waitForTimeout(2000);
-
-  await inputFile.evaluate((el) => el.showPicker());
-  await this.page.waitForTimeout(500); // Breve espera
-  await this.page.keyboard.press('Escape'); // Cierra el dialogo manualmente
-  */
-  
-  
-  console.log(`[STEP END] Imagen seleccionada sin mostrar el file chooser.`);
+    console.log(`[STEP END] Cambios guardados.`);
 });
-
-When('el usuario hace click en el botón guardar', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando a que el botón "Guardar" esté disponible.`);
-
-  await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[2]/div/button[2]', { timeout: 8000 }); // Esperamos que aparezca el botón
-  await this.page.waitForTimeout(1000); // Breve pausa para estabilidad
-
-  console.log(`[STEP START] Haciendo click en el botón "Guardar".`);
-  await this.page.click('xpath=/html/body/div[9]/div/div/div/div[2]/div/button[2]');
-  console.log(`[STEP END] Click realizado en el botón "Guardar".`);
-});
-
 
 Then('el usuario espera unos segundos E4', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando unos segundos.`);
-  await this.page.waitForTimeout(5000);
-  console.log(`[STEP END] Tiempo de espera completado.`);
-  await this.browser.close();
+    console.log(`[STEP START] Esperando unos segundos.`);
+    await this.page.waitForTimeout(3000);
+    console.log(`[STEP END] Tiempo de espera completado.`);
+});
+
+Then('el usuario verifica que el texto ingresado se muestra correctamente en la sección "Sobre mí"', { timeout: 10000 }, async function () {
+    console.log(`[STEP START] Validando la actualización en "Sobre mí".`);
+
+    await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[2]/p', { timeout: 10000 }); // Ajusta el selector según la estructura HTML
+    const textoMostrado = await this.page.textContent('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[2]/p');
+
+    if (textoMostrado.trim() === worldParameters.textoSobreMi.trim()) {
+        console.log(`[SUCCESS] El texto en "Sobre mí" se actualizó correctamente.`);
+    } else {
+        console.error(`[ERROR] El texto en "Sobre mí" no coincide.`);
+    }
+
+    console.log(`[STEP END] Validación completada.`);
+    await this.browser.close();
+
 });
 
