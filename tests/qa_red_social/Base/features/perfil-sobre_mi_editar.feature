@@ -1,4 +1,4 @@
-#PARAMS: {"textoSobreMi":"Lorem ipsum dolor sit amet, consectetur adipiscing elit."}
+#PARAMS: {"textoSobreMi":"Lorem ipsum dolor sit amet, consectetur adipiscing elit.","otroVal":"12345"}
 
 Feature: Editar la sección "Sobre mí"
 

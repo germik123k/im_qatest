@@ -45,7 +45,7 @@ app.post('/run-tests', async (req, res) => {
     const uuid = `${req.body.fileName}_${Date.now()}`;
     req.body.uuid = uuid;
     let errorDB = true;
-
+    console.log('entro 123');
     try {
         // Guardar el estado "procesando" en Firebase
         await setDoc(doc(db, "estado_test", uuid), {
@@ -73,17 +73,27 @@ app.post('/run-tests', async (req, res) => {
 
         const objParamFeature = req.body.parametros.objParamFeature;
         const objParamFeature2 = req.body.parametros.objParamFeature2;
-
-        let finalParams = Object.keys(objParamFeature2).length > 0 ? objParamFeature2 : objParamFeature;
+        
+        let finalParams;
+        if (Object.keys(objParamFeature2).length > 0) {
+            finalParams = Object.entries(objParamFeature2).reduce((acc, [key, value]) => {
+                acc[key] = value.value; // Extraemos solo `value`
+                return acc;
+            }, {});
+        } else {
+            finalParams = objParamFeature;
+        }
+        console.log('finalParams:', finalParams);
+        
         finalParams.uuid = uuid;
-        // Guardar parámetros en un archivo .json con el mismo nombre que el .feature
+
         const jsonFileName = path.join(__dirname, `./tests/${req.body.env}/${vercionPathG}/features/${req.body.fileName.replace('.feature', '.json')}`);
         fs.writeFileSync(jsonFileName, JSON.stringify(finalParams, null, 2), 'utf8');
         console.log(`Parámetros guardados en: ${jsonFileName}`);
 
-        // Construir el comando sin --world-parameters
         const command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${fileFeatureG}`;
         console.log(command);
+        
 
         // Ejecutar el comando
         exec(command, async (error, stdout, stderr) => {
@@ -134,67 +144,6 @@ app.post('/get-registro-test', async (req, res) => {
 
 
 
-
-
-
-/*
-// Endpoint para listar archivos en la carpeta de features
-app.post('/list-files', (req, res) => {
-
-    const env = req.body.env || 'prod_actual';
-    const version = req.body.version ? req.body.version : 'Base';
-    
-    const dirPath = path.join(__dirname, 'tests', env, 'Base/features');
-    const dirPath2 = path.join(__dirname, 'tests', env);
-    
-    let directorios = [];
-    
-    // Primero, leemos la carpeta que contiene las versiones
-    fs.readdir(dirPath2, (err, items) => {
-        if (err) {
-            console.error(`Error al leer el directorio ${dirPath2}:`, err);
-            return res.status(500).send({ error: "Error al leer el directorio" });
-        }
-        
-        // Mapeamos cada item a una promesa que resuelve si es directorio
-        const statPromises = items.map(item => {
-            let itemPath = path.join(dirPath2, item);
-            return new Promise((resolve, reject) => {
-                fs.stat(itemPath, (err, stats) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    if (stats.isDirectory()) {
-                        directorios.push(item);
-                    }
-                    resolve();
-                });
-            });
-        });
-        
-        // Esperamos a que todas las promesas se resuelvan
-        Promise.all(statPromises)
-            .then(() => {
-                // Ahora, directorios tiene todos los directorios encontrados.
-                console.log('directorios final:', JSON.stringify(directorios));
-                // Podrías también leer los archivos de la carpeta de features
-                fs.readdir(dirPath, (err, files) => {
-                    if (err) {
-                        console.error(`Error al leer el directorio ${dirPath}:`, err);
-                        return res.status(500).send({ error: "Error al leer el directorio de tests" });
-                    }
-                    let tests = files;
-                    // Ahora enviamos la respuesta sólo cuando todo ya se haya completado
-                    res.json({ test: tests, versiones: directorios });
-                });
-            })
-            .catch(err => {
-                console.error("Error en las promesas:", err);
-                res.status(500).send({ error: "Error obteniendo directorios" });
-            });
-    });
-});
-*/
 
 
 
@@ -360,11 +309,50 @@ app.post("/load-work-space", async (req, res) => {
 
 
 
+app.post("/delete-work-space", async (req, res) => {
+    try {
+        const { espacioName } = req.body;
 
+        // ✅ Validación básica
+        if (!espacioName || espacioName.trim().length < 3) {
+            return res.status(400).send({ error: "El nombre del espacio de trabajo no es válido." });
+        }
 
+        // ✅ Referencia a la colección de Firebase
+        const workspaceCollection = collection(db, "espacio_de_trabajo");
 
+        // ✅ Buscar el documento con el nombre proporcionado
+        const q = query(workspaceCollection, where("workspaceName", "==", espacioName));
+        const querySnapshot = await getDocs(q);
 
+        if (querySnapshot.empty) {
+            return res.status(404).send({ error: "El espacio de trabajo no existe." });
+        }
 
+        // ✅ Eliminar el documento encontrado
+        for (const doc of querySnapshot.docs) {
+            await deleteDoc(doc.ref);
+            console.log(`Espacio de trabajo eliminado: ${doc.id}`);
+        }
+
+        // ✅ Obtener la lista actualizada de espacios
+        const updatedSnapshot = await getDocs(collection(db, "espacio_de_trabajo"));
+        const updatedWorkspaceNames = updatedSnapshot.docs
+        .map(doc => doc.data().workspaceName)
+        .filter(name => name); // Filtra valores undefined o null
+    
+
+        // ✅ Respuesta al frontend con la lista actualizada
+        res.status(200).send({
+            espacioNameDelete: espacioName,
+            workspacesUpdated: updatedWorkspaceNames
+        });
+
+    } catch (error) {
+        console.error("Error al eliminar espacio de trabajo:", error);
+        res.status(500).send({ error: "Hubo un error al eliminar el espacio de trabajo." });
+    }
+});
 
 
 app.post("/save-work-space", async (req, res) => {

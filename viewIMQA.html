@@ -71,7 +71,7 @@
                             <i class="fa fa-sign-in" aria-hidden="true"></i>
                         </button>
 
-                        <button class="btn btn-danger btn-sm mr-3" id="btnEliminarEspacio">
+                        <button class="btn btn-danger btn-sm mr-3" id="btnEliminarEspacio"  onclick="eliminarEspacioTrabajo();">
                             <i class="fa fa-trash" aria-hidden="true"></i>
                         </button>
                         <input type="text" id="workspaceName" class="form-control form-control-sm mr-1" placeholder="Nombre del espacio" style="width: 160px;">
@@ -590,7 +590,7 @@
                 }
             });
         }
-
+        
         function cargarEspacioTrabajo() {
             var espacioName = $('#workspaceSelect').val();
             $.ajax({
@@ -635,22 +635,48 @@
             });
         }
                 
-        function eliminarEspacioTrabajo(espacioName) {
+        function eliminarEspacioTrabajo() {
+            var espacioName = $('#workspaceSelect').val();
             $.ajax({
                 url: "http://localhost:3000/delete-work-space",
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify({ espacioName: espacioName }),
                 success: function(response) {
-                    console.log("Espacio de trabajo eliminado:", response);
-                    alert("Espacio de trabajo eliminado exitosamente!");
+                    $('#workspaceSelect').empty();
+                    $('#workspaceSelect').append('<option value="default">Seleccionar...</option>');
+
+                    // ✅ Filtramos valores null antes de recorrer
+                    response.workspacesUpdated
+                        .filter(workspaceName => workspaceName !== null)
+                        .forEach(function(workspaceName) {
+                            $('#workspaceSelect').append(`<option value="${workspaceName}">${workspaceName}</option>`);
+                        });
+
+                    console.log("Espacio de trabajo eliminado:", response.espacioNameDelete);
+
+                    // ✅ Modificamos el modal dinámicamente
+                    $('#fileModalLabel').text("Aviso");
+                    $('#fileContent').html(`<b>Espacio de trabajo "${response.espacioNameDelete}" eliminado exitosamente.</b>`);
+                    $('#btnGuardar').hide(); // Ocultar botón "Guardar"  
+                    
+                    // ✅ Mostramos el modal
+                    $('#fileModal').modal('show');
                 },
+
                 error: function(xhr, status, error) {
                     console.error("Error al eliminar espacio de trabajo:", error);
-                    alert("Error al eliminar espacio de trabajo.");
+
+                    // ✅ Modificamos el modal dinámicamente en caso de error
+                    $('#fileModalLabel').text("Error");
+                    $('#fileContent').html("<b>Hubo un error al eliminar el espacio de trabajo.</b>");
+                    $('#btnGuardar').hide(); // Ocultar botón "Guardar"
+
+                    $('#fileModal').modal('show');
                 }
             });
-        }
+}
+
         function obtenerEspaciosDeTrabajo() {
             $.ajax({
                 url: "http://localhost:3000/get-workspaces",
