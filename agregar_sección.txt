@@ -1,0 +1,55 @@
+Educación
+
+Agregar educación 
+
+Nivel de Educación
+select - Terciario-Grado-Especialización-Maestría-Doctorado-Otro
+
+Institución
+input text
+
+Título
+input text
+
+Especialización
+input text
+
+Descripción
+input text (0-180)
+
+Ubicación
+input text
+
+Período
+Inicio input fecha
+
+Finalización input fecha
+
+Actualmente vigente input checkbox
+
+----------------------------------------------------------
+Residencia - Especialización - Formación - Reconocimientos y becas - Experiencia laboral - Sociedad científica
+
+Agregar residencia - especialización - formación - reconocimientos y becas - experiencia laboral - sociedad científica
+
+Institución
+input text
+
+Especialidad - Especialización - Título del curso - Nomber de beca o premio - Cargo
+input text
+
+Descripción
+input text (0-180)
+
+Ubicación
+input text
+
+Período - Período - Período - Recepción
+Inicio input fecha
+
+Finalización input fecha (no en reconocimientos y becas)
+
+Actualmente vigente input checkbox
+
+----------------------------------------------------------
+

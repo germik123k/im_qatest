@@ -107,64 +107,38 @@ Then('el usuario espera unos segundos E1', { timeout: 10000 }, async function ()
 });
 
 //------------------------------------------------
-When('el usuario hace click en el botón de edición de "Sobre mí"', { timeout: 10000 }, async function () {
+When('el usuario hace click en el botón de agregar sección', { timeout: 10000 }, async function () {
     console.log(`[STEP START] Click en el botón de edición de "Sobre mí".`);
     
-    await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[1]/button', { timeout: 10000 }); // Ajusta el selector según el HTML
-    await this.page.click('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[1]/button');
+    await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[3]/div[2]/div/div[2]/button', { timeout: 10000 }); // Ajusta el selector según el HTML
+    await this.page.click('xpath=/html/body/div[2]/div/div/div[1]/div[3]/div[2]/div/div[2]/button');
     
     console.log(`[STEP END] Botón de edición de "Sobre mí" presionado.`);
 });
 
-Then('el usuario espera unos segundos E2', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Esperando unos segundos.`);
-    await this.page.waitForTimeout(2000);
-    console.log(`[STEP END] Tiempo de espera completado.`);
+
+Then('se abre un modal', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Verificando apertura de modal.`);
+  
+  await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div/h2', { timeout: 10000 }); // Ajusta el selector según el HTML del modal
+  console.log(`[STEP END] Modal detectado.`);
 });
 
-When('el usuario escribe un texto en el campo de edición "Sobre mí"', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Ingresando texto en la sección "Sobre mí".`);
-    await this.page.waitForSelector('#textarea-about-me', { timeout: 10000 }); // Ajusta el selector
-    await this.page.fill('#textarea-about-me', worldParameters.textoSobreMi);
-
-    console.log(`[STEP END] Texto ingresado en "Sobre mí".`);
+And('el usuario espera unos segundos E2', { timeout: 10000 }, async function () {
+  console.log(`[STEP START] Esperando unos segundos (E2).`);
+  await this.page.waitForTimeout(5000);
+  console.log(`[STEP END] Tiempo de espera completado (E2).`);
 });
 
-Then('el usuario espera unos segundos E3', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Esperando unos segundos.`);
-    await this.page.waitForTimeout(3000);
-    console.log(`[STEP END] Tiempo de espera completado.`);
-});
 
-When('el usuario hace click en el botón "Guardar cambios"', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Guardando cambios en "Sobre mí".`);
 
-    await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div[2]/button', { timeout: 10000 }); // Ajusta el selector
-    await this.page.click('xpath=/html/body/div[9]/div/div/div/div[2]/button');
 
-    console.log(`[STEP END] Cambios guardados.`);
-});
 
-Then('el usuario espera unos segundos E4', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Esperando unos segundos.`);
-    await this.page.waitForTimeout(3000);
-    console.log(`[STEP END] Tiempo de espera completado.`);
-});
 
-Then('el usuario verifica que el texto ingresado se muestra correctamente en la sección "Sobre mí"', { timeout: 10000 }, async function () {
-    console.log(`[STEP START] Validando la actualización en "Sobre mí".`);
 
-    await this.page.waitForSelector('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[2]/p', { timeout: 10000 }); // Ajusta el selector según la estructura HTML
-    const textoMostrado = await this.page.textContent('xpath=/html/body/div[2]/div/div/div[1]/div[2]/div/div[2]/p');
 
-    if (textoMostrado.trim() === worldParameters.textoSobreMi.trim()) {
-        console.log(`[SUCCESS] El texto en "Sobre mí" se actualizó correctamente.`);
-    } else {
-        console.error(`[ERROR] El texto en "Sobre mí" no coincide.`);
-    }
 
-    console.log(`[STEP END] Validación completada.`);
-    await this.browser.close();
 
-});
+
+
 
