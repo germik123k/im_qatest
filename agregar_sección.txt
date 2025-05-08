@@ -28,15 +28,17 @@ Finalización input fecha
 Actualmente vigente input checkbox
 
 ----------------------------------------------------------
-Residencia - Especialización - Formación - Reconocimientos y becas - Experiencia laboral - Sociedad científica
+Residencia - Especialización - Formación - Reconocimientos y becas - Experiencia laboral - Sociedad científica - Docencia
 
-Agregar residencia - especialización - formación - reconocimientos y becas - experiencia laboral - sociedad científica
+Agregar residencia - especialización - formación - reconocimientos y becas - experiencia laboral - sociedad científica - docencia
 
 Institución
 input text
 
-Especialidad - Especialización - Título del curso - Nomber de beca o premio - Cargo
+Especialidad - Especialización - Título del curso - Nomber de beca o premio - Cargo - Cargo
 input text
+
+Cátedra (solo Docencia)
 
 Descripción
 input text (0-180)
