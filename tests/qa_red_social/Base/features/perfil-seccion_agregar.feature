@@ -1,4 +1,4 @@
-#PARAMS: {"seccion":"Residencia", "datosFormulario":{}}
+#PARAMS: {"seccion":"Residencia"}
 
 Feature: Agregar sección al perfil
 

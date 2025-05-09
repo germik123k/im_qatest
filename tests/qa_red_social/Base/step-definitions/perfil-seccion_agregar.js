@@ -30,7 +30,7 @@ try {
     worldParameters = {}; // Default vacío si hay error
 }
 // Puedes usar `worldParameters` en tus steps
-Given('que el usuario navega a {string}', { timeout: 10000 }, async function (url) {
+Given('que el usuario navega a {string}', { timeout: 130000 }, async function (url) {
     console.log(`[STEP START] Navegando a la URL: ${url}`);
     this.browser = await chromium.launch({
         headless: false,
@@ -53,7 +53,7 @@ Given('que el usuario navega a {string}', { timeout: 10000 }, async function (ur
     console.log(`[STEP END] Navegación completada.`);
 });
 
-When('el usuario hace click en {string} button', { timeout: 13000 }, async function (buttonName) {
+When('el usuario hace click en {string} button', { timeout: 30000 }, async function (buttonName) {
   //await updateTestState(worldParameters.uuid, `[STEP START] Haciendo click en el botón: ${buttonName}`, 30, "procesando");
   console.log(`[STEP START] Haciendo click en el botón: ${buttonName}`);
   await this.page.waitForTimeout(9000);
@@ -64,7 +64,7 @@ When('el usuario hace click en {string} button', { timeout: 13000 }, async funct
 
 When('luego de unos segundos ingresas sus credenciales', {timeout: 20000}, async function () {
   console.log(`[STEP START] Ingresando credenciales.`);
-  await this.page.waitForTimeout(5000);
+  await this.page.waitForTimeout(7000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
   await this.page.fill('#username', 'pt304596@gmail.com');
   console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);
@@ -103,9 +103,9 @@ When('el usuario modifica la URL a {string}', {timeout: 10000}, async function (
   });
   console.log(`[STEP END] Cambio de URL completado.`);
 });
-Then('el usuario espera unos segundos E1', { timeout: 15000 }, async function () {
+Then('el usuario espera unos segundos E1', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Esperando unos segundos.`);
-  await this.page.waitForTimeout(14000);
+  await this.page.waitForTimeout(7000);
   console.log(`[STEP END] Tiempo de espera completado.`);
 });
 

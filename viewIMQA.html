@@ -21,6 +21,13 @@
             border-color: #b5dbfc !important;
         }
 
+        #paramTableBody td {
+            vertical-align: middle; /* Corrige alineación */
+            padding: 5px !important; /* Reduce espacio vertical */
+            margin: 0 !important;
+        }
+
+       
 
     </style>
 </head>
@@ -222,6 +229,7 @@
         var featureParamG = {};
         var user = 'admin';
         var catSelect = 'todas';
+        var contNewParam = 0;
  //   var espacioTrabajo = {user:'admin', workspaceName:'',version:'', objParamFeature:'', objParamFeature2:''};
 
 
@@ -301,100 +309,158 @@
         }
 
         function editarParametros(fileFeature) {
-            $("#fileModalLabel").text("Editar Parámetros: " + fileFeature);
-            featureParamG = { feature: fileFeature, param: {} };
+    contNewParam = 0;
+    $("#fileModalLabel").text("Editar Parámetros: " + fileFeature);
+    featureParamG = { feature: fileFeature, param: {} };
 
-            let contentHtml = `
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Parámetro</th>
-                            <th>Valor</th>
-                            <th>Aleatorio</th>
-                            <th>Max Size</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+    let contentHtml = '<table class="table table-bordered">'+
+        '<thead>'+
+            '<tr>'+
+                '<th>Parámetro</th>'+
+                '<th>Valor</th>'+
+                '<th>Aleatorio</th>'+
+                '<th>Max Size</th>'+
+                '<th>Eliminar</th>'+  // Nueva columna para eliminar
+            '</tr>'+
+        '</thead>'+
+        '<tbody id="paramTableBody">';
 
-            if (objParamFeature[fileFeature]) {
-                var keysParam = Object.keys(objParamFeature[fileFeature]);
+    if (objParamFeature[fileFeature]) {
+        var keysParam = objParamFeature2[fileFeature] && Object.keys(objParamFeature2[fileFeature]).length > 0 
+            ? Object.keys(objParamFeature2[fileFeature]) 
+            : Object.keys(objParamFeature[fileFeature] || {});
 
-                for (var i = 0; i < keysParam.length; i++) {
-                    var paramName = keysParam[i];
+        for (var i = 0; i < keysParam.length; i++) {
+            var paramName = keysParam[i];
+            let paramData = objParamFeature2[fileFeature]?.[paramName] || {};
+//            let value = paramData.value ?? objParamFeature[fileFeature][paramName];
+            let value = paramData.value !== undefined ? paramData.value : objParamFeature[fileFeature][paramName];
+            let selectValue = paramData.select ?? 'desactivado';
+            let checkboxChecked = paramData.chbx ?? false;
+            let maxChars = paramData.sizeMax ?? 50;
+            let isNewParam = paramData.newParam ?? false;
 
-                    // Obtener datos de objParamFeature2 si existen
-                    let paramData = objParamFeature2[fileFeature]?.[paramName] || {};
-                    let value = paramData.value ?? objParamFeature[fileFeature][paramName];
-                    let selectValue = paramData.select ?? "desactivado";
-                    let checkboxChecked = paramData.chbx ?? false;
-                    let maxChars = paramData.sizeMax ?? 50;
+            var checkboxId = 'modCboxMSize' + i;
+            var inputMSId = 'modInpMSize' + i;
+            var inputValId = 'modInpValue' + i;
+            var selecId = 'modSel' + i;
+            var deleteBtnId = 'deleteParam' + i;
 
-                    var checkboxId = 'modCboxMSize' + i;
-                    var inputMSId = 'modInpMSize' + i;
-                    var inputValId = 'modInpValue' + i;
-                    var selecId = 'modSel' + i;
+            featureParamG.param[keysParam[i]] = {
+                value: inputValId,
+                selec: selecId,
+                checkbox: checkboxId,
+                inputMaxSize: inputMSId
+            };
 
-                    featureParamG.param[keysParam[i]] = {
-                        value: inputValId,
-                        selec: selecId,
-                        checkbox: checkboxId,
-                        inputMaxSize: inputMSId
-                    };
+            contentHtml += '<tr>'+//No ponemos param en id pq puede tener acentos, espacios etc
+                '<td><input type="text" class="form-control form-control-sm" value="'+paramName+'" disabled /></td>'+
+                '<td><input type="text" id="'+inputValId+'" class="form-control form-control-sm" value="'+value+'" /></td>'+
+                '<td>'+
+                    '<select id="'+selecId+'" class="form-control form-control-sm">'+
+                        '<option value="desactivado" '+(selectValue === 'desactivado' ? 'selected' : '')+'>Desactivado</option>'+
+                        '<option value="nombre" '+(selectValue === 'nombre' ? 'selected' : '')+'>Nombre</option>'+
+                        '<option value="apellido" '+(selectValue === 'apellido' ? 'selected' : '')+'>Apellido</option>'+
+                        '<option value="pais" '+(selectValue === 'pais' ? 'selected' : '')+'>País</option>'+
+                        '<option value="ciudad" '+(selectValue === 'ciudad' ? 'selected' : '')+'>Ciudad</option>'+
+                        '<option value="texto" '+(selectValue === 'texto' ? 'selected' : '')+'>Texto</option>'+
+                        '<option value="trabajos" '+(selectValue === 'trabajos' ? 'selected' : '')+'>Trabajos</option>'+
+                        '<option value="universidad" '+(selectValue === 'universidad' ? 'selected' : '')+'>Universidad</option>'+
+                    '</select>'+
+                '</td>'+
+                '<td>'+
+                    '<div class="d-flex align-items-center">'+
+                        '<input type="checkbox" id="'+checkboxId+'" class="mr-2" onclick="disableMaxSize(\''+i+'\', \''+fileFeature+'\');" '+(checkboxChecked ? 'checked' : '')+' />'+
+                        '<input type="number" id="'+inputMSId+'" class="form-control form-control-sm" value="'+maxChars+'" max="100000" '+(checkboxChecked ? '' : 'disabled')+' />'+
+                    '</div>'+
+                '</td>'+
+                '<td class="text-center">'+
+                    '<button id="'+deleteBtnId+'" class="btn btn-danger btn-sm" onclick="deleteParam(true, \''+paramName+'\')" '+(isNewParam ? '' : 'disabled')+'>'+
+                        '<i class="fa fa-trash"></i>'+
+                    '</button>'+
+                '</td>'+
+            '</tr>';
+        }
+    } else {
+        contentHtml += '<tr>'+
+            '<td colspan="5" class="text-center text-danger">No hay parámetros disponibles para este archivo.</td>'+
+        '</tr>';
+    }
 
-                    contentHtml += `
-                        <tr>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" value="${paramName}" disabled />
-                            </td>
-                            <td>
-                                <input type="text" id="${inputValId}" class="form-control form-control-sm" value="${value}" />
-                            </td>
-                            <td>
-                                <select id="${selecId}" class="form-control form-control-sm">
-                                    <option value="desactivado" ${selectValue === "desactivado" ? "selected" : ""}>Desactivado</option>
-                                    <option value="nombre" ${selectValue === "nombre" ? "selected" : ""}>Nombre</option>
-                                    <option value="apellido" ${selectValue === "apellido" ? "selected" : ""}>Apellido</option>
-                                    <option value="pais" ${selectValue === "pais" ? "selected" : ""}>País</option>
-                                    <option value="ciudad" ${selectValue === "ciudad" ? "selected" : ""}>Ciudad</option>
-                                    <option value="texto" ${selectValue === "texto" ? "selected" : ""}>Texto</option>
-                                    <option value="trabajos" ${selectValue === "trabajos" ? "selected" : ""}>Trabajos</option>
-                                    <option value="universidad" ${selectValue === "universidad" ? "selected" : ""}>Universidad</option>
-                                </select>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <input type="checkbox" id="${checkboxId}" class="mr-2" onclick="disableMaxSize('${i}', '${fileFeature}');" ${checkboxChecked ? "checked" : ""} />
-                                    <input type="number" id="${inputMSId}" class="form-control form-control-sm" value="${maxChars}" max="100000" ${checkboxChecked ? "" : "disabled"} />
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                }
-            } else {
-                contentHtml += `
-                    <tr>
-                        <td colspan="4" class="text-center text-danger">
-                            No hay parámetros disponibles para este archivo.
-                        </td>
-                    </tr>
-                `;
-            }
+    contentHtml += '</tbody></table>'+
+        '<div class="text-center">'+
+            '<button id="btnAgregarParametro" class="btn btn-primary btn-sm d-flex align-items-center justify-content-center">'+
+                '<i class="fa fa-plus mr-2"></i> Agregar Parámetro'+
+            '</button>'+
+        '</div>';
 
-            contentHtml += `
-                    </tbody>
-                </table>
-            `;
+    $("#fileContent").html(contentHtml);
+    $("#btnGuardar").css("display", "inline-block");
+    $("#fileModal").modal("show");
 
-            $("#fileContent").html(contentHtml);
+    $("#btnAgregarParametro").click(function () {
 
-            // Mostrar el modal y activar el botón de guardar
-            $("#btnGuardar").css("display", "inline-block");
-            $("#fileModal").modal("show");
+        let inputValId = "modNInpValue" + contNewParam;
+        let selecId = "modNSel" + contNewParam;
+        let checkboxId = "modNCboxMSize" + contNewParam;
+        let inputMSId = "modNInpMSize" + contNewParam;
+        let deleteBtnId = "deleteNewParam" + contNewParam;
+
+        let newRow = '<tr id="newFila'+contNewParam+'">'+//Agregamos id para eliminar
+            '<td><input id="paramName'+contNewParam+'" type="text" class="form-control form-control-sm" placeholder="Nuevo Parámetro" /></td>'+
+            '<td><input type="text" id="'+inputValId+'" class="form-control form-control-sm" placeholder="Valor" /></td>'+
+            '<td>'+
+                '<select id="'+selecId+'" class="form-control form-control-sm">'+
+                    '<option value="desactivado">Desactivado</option>'+
+                    '<option value="nombre">Nombre</option>'+
+                    '<option value="apellido">Apellido</option>'+
+                    '<option value="pais">País</option>'+
+                    '<option value="ciudad">Ciudad</option>'+
+                    '<option value="texto">Texto</option>'+
+                    '<option value="trabajos">Trabajos</option>'+
+                    '<option value="universidad">Universidad</option>'+
+                '</select>'+
+            '</td>'+
+            '<td>'+
+                '<div class="d-flex align-items-center">'+
+                    '<input type="checkbox" id="'+checkboxId+'" class="mr-2" />'+
+                    '<input type="number" id="'+inputMSId+'" class="form-control form-control-sm" placeholder="Max Size" max="100000" />'+
+                '</div>'+
+            '</td>'+
+            '<td class="text-center">'+
+                '<button id="'+deleteBtnId+'" class="btn btn-danger btn-sm" onclick="deleteParam(false,\'newFila'+contNewParam+'\')">'+
+                    '<i class="fa fa-trash"></i>'+
+                '</button>'+
+            '</td>'+
+        '</tr>';
+        contNewParam++; // Incrementamos primero para evitar ID duplicados
+
+        $("#paramTableBody").append(newRow);
+    });
+}
+function deleteParam(existente, param) {
+    if (existente) {
+        let fileFeature = featureParamG.feature;
+
+        if (objParamFeature2[fileFeature] && objParamFeature2[fileFeature][param]) {
+            delete objParamFeature2[fileFeature][param]; // Eliminamos del objeto
         }
 
+        // Buscar la fila donde la primera celda contiene el parámetro
+        $("#paramTableBody tr").each(function () {
+            let paramName = $(this).find("td:first input").val();
+            if (paramName === param) {
+                $(this).remove(); // Eliminamos la fila del DOM
+            }
+        });
 
-        //--FUNCIONES VARIAS--//
+    } else {
+        // Directamente removemos la fila nueva usando su ID
+        $("#" + param).remove();
+    }
+
+    console.log("Parámetro eliminado:", param);
+}
         function guardarParamFeature() {
             let fileFeature = featureParamG.feature;
 
@@ -407,6 +473,7 @@
                 objParamFeature2[fileFeature] = {};
             }
 
+            // Guardar parámetros existentes
             Object.keys(featureParamG.param).forEach(paramName => {
                 let paramData = featureParamG.param[paramName];
 
@@ -422,6 +489,26 @@
                     sizeMax: sizeMax ? parseInt(sizeMax) : 50
                 };
             });
+
+            // Guardar nuevos parámetros agregados dinámicamente
+            for (let i = 1; i <= contNewParam; i++) { // Recorremos los nuevos parámetros
+                let paramName = $("#paramName" + i).val();
+
+                if (paramName) { // Solo guardamos si el nombre del parámetro no está vacío
+                    let value = $("#modNInpValue" + i).val();
+                    let select = $("#modNSel" + i).val();
+                    let checkbox = $("#modNCboxMSize" + i).prop("checked");
+                    let sizeMax = $("#modNInpMSize" + i).val();
+
+                    objParamFeature2[fileFeature][paramName] = {
+                        value: value || '',
+                        select: select || 'desactivado',
+                        chbx: checkbox,
+                        sizeMax: sizeMax ? parseInt(sizeMax) : 50,
+                        newParam: true // Indicamos que es un parámetro nuevo
+                    };
+                }
+            }
 
             console.log("Parámetros guardados:", objParamFeature2[fileFeature]);
 
