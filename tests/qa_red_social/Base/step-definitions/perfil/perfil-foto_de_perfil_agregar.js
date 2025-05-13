@@ -3,11 +3,11 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { chromium } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
-const { updateTestState } = require('../../../../utils/testStatus');
+const { updateTestState } = require('../../../../../utils/testStatus');
 
 
 // Antes de ejecutar un test, cargar los parámetros desde el .json
-const jsonFilePath = path.join(__dirname, '../features/perfil-foto_de_perfil_agregar.json');
+const jsonFilePath = path.join(__dirname, '../../features/perfil/perfil-foto_de_perfil_agregar.json');
 let worldParameters;
 
 try {
@@ -76,12 +76,12 @@ When('luego de unos segundos ingresas sus credenciales', {timeout: 20000}, async
   console.log(`[STEP START] Ingresando credenciales.`);
   await this.page.waitForTimeout(5000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
-  await this.page.fill('#username', 'pt304596@gmail.com');
-  console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);
+  await this.page.fill('#username', worldParameters.email);
+  console.log(`[INFO] Usuario ingresado: ${worldParameters.email}`);
   await this.page.waitForSelector('#password', { timeout: 10000 });
-  await this.page.fill('#password', 'Maradona86.');
+  await this.page.fill('#password', worldParameters.password);
   await this.page.waitForSelector('#username', { timeout: 10000 });
-  await this.page.fill('#username', 'pt304596@gmail.com');  
+  await this.page.fill('#username', worldParameters.email);
   console.log(`[INFO] Contraseña ingresada.`);
   console.log(`[STEP END] Credenciales ingresadas.`);
 });

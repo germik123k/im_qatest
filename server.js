@@ -3,6 +3,8 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const app = express();
+const dns = require('dns').promises; // Usamos la versión con promesas
+
 const port = 3000;
 
 
@@ -86,12 +88,13 @@ app.post('/run-tests', async (req, res) => {
         console.log('finalParams:', finalParams);
         
         finalParams.uuid = uuid;
-
-        const jsonFileName = path.join(__dirname, `./tests/${req.body.env}/${vercionPathG}/features/${req.body.fileName.replace('.feature', '.json')}`);
+        let categoria = ''
+        if(req.body.categoria != 'general')categoria = req.body.categoria + '/';
+        const jsonFileName = path.join(__dirname, `./tests/${req.body.env}/${vercionPathG}/features/${categoria}${req.body.fileName.replace('.feature', '.json')}`);
         fs.writeFileSync(jsonFileName, JSON.stringify(finalParams, null, 2), 'utf8');
         console.log(`Parámetros guardados en: ${jsonFileName}`);
 
-        const command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${fileFeatureG}`;
+        const command = `npx cucumber-js --require ./tests/${req.body.env}/${vercionPathG}/step-definitions/${categoria}${fileStepG} ./tests/${req.body.env}/${vercionPathG}/features/${categoria}${fileFeatureG}`;
         console.log(command);
         
 
@@ -145,10 +148,55 @@ app.post('/get-registro-test', async (req, res) => {
 
 
 
+app.post('/list-files', async (req, res) => {
+    const env = req.body.env || 'prod_actual';
+    const baseDir = path.join(__dirname, 'tests', env, 'Base/features');
+    let categorias = { "general": {} }; // Inicializamos "general" para archivos sin categoría
+
+    try {
+        const dirs = await fs.promises.readdir(baseDir, { withFileTypes: true });
+
+        for (const dir of dirs) {
+            if (dir.isDirectory()) {
+                const categoria = dir.name;
+                categorias[categoria] = {};
+
+                const featureFiles = await fs.promises.readdir(path.join(baseDir, categoria));
+
+                for (const file of featureFiles) {
+                    if (file.endsWith('.feature')) {
+                        const filePath = path.join(baseDir, categoria, file);
+                        const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+
+                        const paramMatches = fileContent.match(/#PARAMS:(.*)/);
+                        let parametros = paramMatches ? JSON.parse(paramMatches[1].trim()) : {};
+
+                        categorias[categoria][file] = parametros;
+                    }
+                }
+            } else if (dir.isFile() && dir.name.endsWith('.feature')) {
+                // Archivos directamente en 'Base/features/' van en la categoría "general"
+                const filePath = path.join(baseDir, dir.name);
+                const fileContent = await fs.promises.readFile(filePath, 'utf-8');
+
+                const paramMatches = fileContent.match(/#PARAMS:(.*)/);
+                let parametros = paramMatches ? JSON.parse(paramMatches[1].trim()) : {};
+
+                categorias["general"][dir.name] = parametros;
+            }
+        }
+
+        res.json({ categorias, versiones:[] });
+
+    } catch (error) {
+        console.error("Error en la lectura de archivos o directorios:", error);
+        res.status(500).send({ error: "Error obteniendo datos" });
+    }
+});
 
 
 
-app.post('/list-files', (req, res) => {
+app.post('/list-files2', (req, res) => {
     const env = req.body.env || 'prod_actual';
     const version = req.body.version || 'Base';
 
@@ -445,6 +493,43 @@ app.post("/get-workspaces", async (req, res) => {
     } catch (error) {
         console.error("Error al obtener espacios de trabajo:", error);
         res.status(500).send({ error: "Hubo un error al obtener los espacios de trabajo." });
+    }
+});
+
+
+
+async function domainExists(domain) {
+    try {
+        await dns.resolve(domain); // Verifica si el dominio realmente existe
+        return true;
+    } catch {
+        return false; // Si falla, el dominio no existe
+    }
+}
+
+app.post('/checkEmail', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: "Formato de email inválido." });
+    }
+
+    const domain = email.split('@')[1];
+
+    try {
+        const exists = await domainExists(domain);
+        if (!exists) {
+            return res.json({ valid: false, message: `El dominio ${domain} NO existe.` });
+        }
+
+        const addresses = await dns.resolveMx(domain);
+        if (addresses.length && addresses.some(mx => mx.exchange)) {
+            res.json({ valid: true, message: `El dominio ${domain} tiene registros MX: ${addresses.map(mx => mx.exchange).join(', ')}` });
+        } else {
+            res.json({ valid: false, message: `El dominio ${domain} NO tiene registros MX válidos.` });
+        }
+    } catch (error) {
+        res.json({ valid: false, message: `Error al verificar el dominio ${domain}: ${error.message}` });
     }
 });
 

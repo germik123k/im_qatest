@@ -47,6 +47,14 @@
         
             <!-- Columna para los elementos alineados a la derecha -->
             <div class="col d-flex align-items-center justify-content-end">
+
+                <!-- Botón de login -->
+                <!---
+                    <button class="btn btn-secondary btn-sm" id="" title="Test email" onclick="checkEmail();">
+                        Check email
+                    </button>
+                    <input type="text" id="emailCheckInp" sytle="width:100px;" />
+                -->
                 <!-- Nombre del usuario -->
                 <label id="userName" class="mr-2 font-weight-bold">Admin</label>
                 
@@ -219,9 +227,10 @@
         var uuidG =''; //registro procesandose
         var arrListFeaturesProc = [];
         var arrListFeatures = [];
+        var objFeatToCat ={};
         var objParamFeature = {};
         var objParamFeature2 = {};
-
+        var categorias = {};
         var hiloLatenciaG = null;
         var estadoColaProc = 'available'; // Estados posibles: 'available', 'bussy', 'pause'
         var runColaProcess = false; //Si el contenedor de procesos esta corriendo'
@@ -240,55 +249,54 @@
             versionG = $("#versionSelect").val();
         }
         // Función para actualizar el listado de archivos
-        function changeEntorno() {
-            limpiarContFiles();
-            arrListFeaturesProc = [];
+function changeEntorno() {
+    limpiarContFiles();
+    arrListFeaturesProc = [];
+    arrListFeatures = [];
+    idFeatureSel0G = '';
+    updateEntornoVersion();
+
+    var postData = { env: entornoG, version: versionG };
+    console.log('postData:', postData);
+
+    $.ajax({
+        url: "http://localhost:3000/list-files",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(postData),
+        success: function(response) {
             arrListFeatures = [];
-            idFeatureSel0G = '';
-            updateEntornoVersion();            
-            // Preparamos los datos a enviar en la petición
-            var postData = { env: entornoG, version: versionG};
-            console.log('postData:',postData);
-            // Enviamos la petición POST al endpoint /list-files del backend
-            $.ajax({
-               url: "http://localhost:3000/list-files",
-               type: "POST",
-               contentType: "application/json",
-               data: JSON.stringify(postData),
-               success: function(response) {
-                    
-                    arrListFeatures = [];
-                    arrListFeatures = response.test;
-                    objParamFeature = response.parametros;
-                    var categorias = {};
-                    for (var i = 0; i < arrListFeatures.length; i++) {
-                        var strCat = arrListFeatures[i].split('-');
-                        categorias[strCat[0]] = false;
-                    }
-                    var strHtml = '';
-                    strHtml += `<option value="todas">todas</option>`;
+            objParamFeature = {};
+            objFeatToCat={};
+            categorias = {};
+            categorias = response.categorias || {};
+            var strHtml = `<option value="todas">todas</option>`;
 
-                    // Generar opciones HTML para el select
-                    Object.keys(categorias).forEach((key) => {
-                        // Los valores serán siempre "true"
-                        strHtml += `<option value="${key}">${key}</option>`;
-                    });
-
-                    console.log(strHtml);
-                    $("#categorySelect").html(strHtml);
-
-                    updateList();
-                    strHtml = '';
-                    response.versiones.forEach(function(vercion) {
-                        strHtml+='<option value="'+vercion+'">'+vercion+'</option>';
-                    });
-                    $("#selVerc").html(strHtml);
-                },
-               error: function(xhr, status, error) {
-                    console.error("Error al obtener el listado de archivos:", error);
-               }
+            Object.keys(categorias).forEach((categoria) => {
+                strHtml += `<option value="${categoria}">${categoria}</option>`;
+                Object.keys(categorias[categoria]).forEach((feature) => {
+                    arrListFeatures.push(feature);
+                    objFeatToCat[feature]=categoria;
+                    objParamFeature[feature] = categorias[categoria][feature] || {}; 
+                });
             });
+
+            $("#categorySelect").html(strHtml);
+            updateList();
+
+            var strHtmlVer = '';
+            response.versiones.forEach(function(vercion) {
+                strHtmlVer += `<option value="${vercion}">${vercion}</option>`;
+            });
+
+            $("#selVerc").html(strHtmlVer);
+        },
+        error: function(xhr, status, error) {
+            console.error("Error al obtener el listado de archivos:", error);
         }
+    });
+}
+
 
 
 
@@ -339,7 +347,7 @@
             let checkboxChecked = paramData.chbx ?? false;
             let maxChars = paramData.sizeMax ?? 50;
             let isNewParam = paramData.newParam ?? false;
-
+            console.log('for['+i+']:',paramData);
             var checkboxId = 'modCboxMSize' + i;
             var inputMSId = 'modInpMSize' + i;
             var inputValId = 'modInpValue' + i;
@@ -352,6 +360,11 @@
                 checkbox: checkboxId,
                 inputMaxSize: inputMSId
             };
+
+            // Solo agregar newParam si isNewParam es true
+            if (isNewParam) {
+                featureParamG.param[keysParam[i]].newParam = true;
+            }
 
             contentHtml += '<tr>'+//No ponemos param en id pq puede tener acentos, espacios etc
                 '<td><input type="text" class="form-control form-control-sm" value="'+paramName+'" disabled /></td>'+
@@ -439,13 +452,13 @@
     });
 }
 function deleteParam(existente, param) {
+    let fileFeature = featureParamG.feature;
+
+    if (objParamFeature2[fileFeature] && objParamFeature2[fileFeature][param]) {
+        delete objParamFeature2[fileFeature][param]; // Eliminamos del objeto
+    }
+
     if (existente) {
-        let fileFeature = featureParamG.feature;
-
-        if (objParamFeature2[fileFeature] && objParamFeature2[fileFeature][param]) {
-            delete objParamFeature2[fileFeature][param]; // Eliminamos del objeto
-        }
-
         // Buscar la fila donde la primera celda contiene el parámetro
         $("#paramTableBody tr").each(function () {
             let paramName = $(this).find("td:first input").val();
@@ -461,60 +474,60 @@ function deleteParam(existente, param) {
 
     console.log("Parámetro eliminado:", param);
 }
-        function guardarParamFeature() {
-            let fileFeature = featureParamG.feature;
+function guardarParamFeature() {
+    let fileFeature = featureParamG.feature;
 
-            if (!fileFeature) {
-                console.error("Error: No se ha definido el archivo de feature.");
-                return;
-            }
+    if (!fileFeature) {
+        console.error("Error: No se ha definido el archivo de feature.");
+        return;
+    }
 
-            if (!objParamFeature2[fileFeature]) {
-                objParamFeature2[fileFeature] = {};
-            }
+    if (!objParamFeature2[fileFeature]) {
+        objParamFeature2[fileFeature] = {};
+    }
 
-            // Guardar parámetros existentes
-            Object.keys(featureParamG.param).forEach(paramName => {
-                let paramData = featureParamG.param[paramName];
+    Object.keys(featureParamG.param).forEach(paramName => {
+        let paramData = featureParamG.param[paramName];
 
-                let value = $("#" + paramData.value).val();
-                let select = $("#" + paramData.selec).val();
-                let checkbox = $("#" + paramData.checkbox).prop("checked");
-                let sizeMax = $("#" + paramData.inputMaxSize).val();
+        let value = $("#" + paramData.value).val();
+        let select = $("#" + paramData.selec).val();
+        let checkbox = $("#" + paramData.checkbox).prop("checked");
+        let sizeMax = $("#" + paramData.inputMaxSize).val();
 
-                objParamFeature2[fileFeature][paramName] = {
-                    value: value || '',
-                    select: select || 'desactivado',
-                    chbx: checkbox,
-                    sizeMax: sizeMax ? parseInt(sizeMax) : 50
-                };
-            });
+        objParamFeature2[fileFeature][paramName] = {
+            value: value || '',
+            select: select || 'desactivado',
+            chbx: checkbox,
+            sizeMax: sizeMax ? parseInt(sizeMax) : 50
+        };
 
-            // Guardar nuevos parámetros agregados dinámicamente
-            for (let i = 1; i <= contNewParam; i++) { // Recorremos los nuevos parámetros
-                let paramName = $("#paramName" + i).val();
-
-                if (paramName) { // Solo guardamos si el nombre del parámetro no está vacío
-                    let value = $("#modNInpValue" + i).val();
-                    let select = $("#modNSel" + i).val();
-                    let checkbox = $("#modNCboxMSize" + i).prop("checked");
-                    let sizeMax = $("#modNInpMSize" + i).val();
-
-                    objParamFeature2[fileFeature][paramName] = {
-                        value: value || '',
-                        select: select || 'desactivado',
-                        chbx: checkbox,
-                        sizeMax: sizeMax ? parseInt(sizeMax) : 50,
-                        newParam: true // Indicamos que es un parámetro nuevo
-                    };
-                }
-            }
-
-            console.log("Parámetros guardados:", objParamFeature2[fileFeature]);
-
-            // Cerrar el modal solo después de guardar exitosamente
-            $("#fileModal").modal("hide");
+        // Si existe newParam en paramData, lo agregamos
+        if (paramData.newParam) {
+            objParamFeature2[fileFeature][paramName].newParam = true;
         }
+    });
+
+    for (let i = 0; i < contNewParam; i++) { 
+        let paramName = $("#paramName" + i).val();
+
+        if (paramName) {
+            let value = $("#modNInpValue" + i).val();
+            let select = $("#modNSel" + i).val();
+            let checkbox = $("#modNCboxMSize" + i).prop("checked");
+            let sizeMax = $("#modNInpMSize" + i).val();
+
+            objParamFeature2[fileFeature][paramName] = {
+                value: value || '',
+                select: select || 'desactivado',
+                chbx: checkbox,
+                sizeMax: sizeMax ? parseInt(sizeMax) : 50,
+                newParam: true // Confirmamos que es un nuevo parámetro
+            };
+        }
+    }
+
+    $("#fileModal").modal("hide");
+}
 
 
         function disableMaxSize(idEl, feature){
@@ -837,9 +850,12 @@ function deleteParam(existente, param) {
             var textSearch = $('#searchInput').val();
             var strHtmlBtnParam = '';
             catSelect = $("#categorySelect").val();
+
+
             for (var i = 0; i < arrListFeatures.length; i++) {
-                var itemCat = arrListFeatures[i].split('-')[0];
-                if(catSelect == 'todas' || catSelect == itemCat || catSelect == ''){
+
+                if(catSelect == 'todas' || categorias[catSelect][arrListFeatures[i]]!=undefined || catSelect == ''){
+
                     var idEl = 'item0-' + i;
                     var idSpinnerContainer = 'item0C-' + i;
                     var item = arrListFeatures[i];
@@ -1007,12 +1023,6 @@ function deleteParam(existente, param) {
                     }
                 });
 
-
-
-                
-
-                
-            
             }
 
             if(estadoColaProc=='bussy'){
@@ -1029,6 +1039,7 @@ function deleteParam(existente, param) {
                 fileName: fileFeature,
                 env: entornoG,
                 version: versionG,
+                categoria:objFeatToCat[fileFeature],
                 user: 'admin',
                 parametros: {
                     objParamFeature: objParamFeature[fileFeature] || {}, // Asignar objeto vacío si no existe
@@ -1221,6 +1232,27 @@ function deleteParam(existente, param) {
 }
 
 
+function checkEmail() {
+    let email = $('#emailCheckInp').val();
+    $.ajax({
+       url: "http://localhost:3000/checkEmail",
+       type: "POST",
+       contentType: "application/json",
+       data: JSON.stringify({ email: email }),
+       success: function(response) {
+           console.log("Respuesta del servidor:", response);
+       },
+       error: function(xhr, status, error) {
+           console.error("Error al validar el dominio:", error);
+       }
+    });
+}
+
+
+
+
+
+
 window.onload = function() {
     obtenerEspaciosDeTrabajo(); // Llamar al método para obtener y llenar el select
 };
@@ -1231,6 +1263,10 @@ $(document).ready(function() {
     $("#versionSelect").on("change", changeEntorno);
 
 });
+
+
+
+
       </script>
 
 </body>

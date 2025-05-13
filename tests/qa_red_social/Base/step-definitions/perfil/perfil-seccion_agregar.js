@@ -3,7 +3,7 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { chromium } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
-const { updateTestState } = require('../../../../utils/testStatus');
+const { updateTestState } = require('../../../../../utils/testStatus');
 /*
   Secciones:
 Educación
@@ -20,7 +20,7 @@ deberemos agregar variable tipo array o objeto con los inputs diponibles para ca
 y array o objeto con las direcciones xpath o id's de estos inputs, pero no preocupeis, primero dime si entiendes este js
 */
 // Antes de ejecutar un test, cargar los parámetros desde el .json
-const jsonFilePath = path.join(__dirname, '../features/perfil-seccion_agregar.json');
+const jsonFilePath = path.join(__dirname, '../../features/perfil/perfil-seccion_agregar.json');
 let worldParameters;
 try {
     worldParameters = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
@@ -64,14 +64,14 @@ When('el usuario hace click en {string} button', { timeout: 30000 }, async funct
 
 When('luego de unos segundos ingresas sus credenciales', {timeout: 20000}, async function () {
   console.log(`[STEP START] Ingresando credenciales.`);
-  await this.page.waitForTimeout(7000);
+  await this.page.waitForTimeout(5000);
   await this.page.waitForSelector('#username', { timeout: 10000 });
-  await this.page.fill('#username', 'pt304596@gmail.com');
-  console.log(`[INFO] Usuario ingresado: pt304596@gmail.com`);
+  await this.page.fill('#username', worldParameters.email);
+  console.log(`[INFO] Usuario ingresado: ${worldParameters.email}`);
   await this.page.waitForSelector('#password', { timeout: 10000 });
-  await this.page.fill('#password', 'Maradona86.');
+  await this.page.fill('#password', worldParameters.password);
   await this.page.waitForSelector('#username', { timeout: 10000 });
-  await this.page.fill('#username', 'pt304596@gmail.com');  
+  await this.page.fill('#username', worldParameters.email);
   console.log(`[INFO] Contraseña ingresada.`);
   console.log(`[STEP END] Credenciales ingresadas.`);
 });
@@ -110,12 +110,13 @@ Then('el usuario espera unos segundos E1', { timeout: 10000 }, async function ()
 });
 
 //------------------------------------------------
-When('el usuario hace click en el botón de agregar sección', { timeout: 10000 }, async function () {
+When('el usuario hace click en el botón de agregar sección correspondiente', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Detectando botones de gestión de secciones.`);
   
   const botones = await this.page.$$('xpath=/html/body/div[2]/div/div/div[1]/div[3]/div[2]/div/div[2]/button');
+  
   let agregarSeccionButton, ordenarSeccionesButton;
-
+console.log('botones:',botones);
   if (botones.length === 1) {
       // Identificamos si el único botón es el de agregar sección o el de ordenar
       const icono = await botones[0].evaluate(el => el.innerHTML.includes('feather-plus') ? 'agregar' : 'ordenar');
@@ -185,18 +186,18 @@ When('el usuario hace click en el botón de agregar sección', { timeout: 10000 
 });
 
 
-Then('se abre un modal', { timeout: 10000 }, async function () {
+Then('se abre un modal con un formulario', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Verificando apertura de modal.`);
   
   await this.page.waitForSelector('xpath=/html/body/div[9]/div/div/div/div/h2', { timeout: 10000 }); // Ajusta el selector según el HTML del modal
   console.log(`[STEP END] Modal detectado.`);
 });
 
-Then('el usuario espera unos segundos E2', { timeout: 16000 }, async function () {
+Then('el usuario espera unos segundos E2', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Esperando unos segundos (E2).`);
-  await this.page.waitForTimeout(15000);
+  await this.page.waitForTimeout(3000);
   console.log(`[STEP END] Tiempo de espera completado (E2).`);
-  await this.browser.close();
+  //await this.browser.close();
 });
 
 /*
@@ -204,62 +205,104 @@ Then('el usuario espera unos segundos E2', { timeout: 16000 }, async function ()
 
 */
 
-When('el usuario selecciona la sección y hace click en "Agregar"', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Seleccionando sección: ${worldParameters.seccion}`);
-  
- // await this.page.waitForSelector(`xpath=${selectors.seccionDropdown}`, { timeout: 10000 });
- // await this.page.click(`xpath=${selectors.seccionDropdown}`);
- // await this.page.selectOption(`xpath=${selectors.seccionDropdown}`, worldParameters.seccion);
-  
- // await this.page.click(`xpath=${selectors.agregarButton}`);
-  
-  console.log(`[STEP END] Sección seleccionada y enviada.`);
-});
-
-Then('el modal se convierte en un formulario', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando conversión del modal.`);
-  
-  //await this.page.waitForSelector(`xpath=${selectors.formulario}`, { timeout: 10000 });
-  
-  console.log(`[STEP END] Modal convertido en formulario.`);
-});
-
-Then('el usuario espera unos segundos E3', { timeout: 10000 }, async function () {
-  console.log(`[STEP START] Esperando sincronización con UI.`);
-  await this.page.waitForTimeout(5000);
-  console.log(`[STEP END] Espera completada.`);
-});
 
 When('el usuario llena los campos del formulario y confirma la acción', { timeout: 20000 }, async function () {
   console.log(`[STEP START] Llenando formulario para sección: ${worldParameters.seccion}`);
-  /*
-  for (let i = 0; i < worldParameters.dataElements.length; i++) {
-      if (worldParameters.elementsActives[i]) {
-          await this.page.fill(selectors[worldParameters.seccion][i], worldParameters.dataElements[i]);
+
+  // Esperamos 3 segundos antes de validar
+  await this.page.waitForTimeout(3000);
+
+  if (worldParameters.seccion === "Residencia" || worldParameters.seccion === "Educación") {
+      console.log(`[VALIDATION] Sección requiere datos específicos.`);
+
+      // Validamos y llenamos "Institución"
+      if (worldParameters['Institución']) {
+          const institutionSelector = '#institutionSust';
+          await this.page.waitForSelector(institutionSelector, { timeout: 10000 });
+          await this.page.fill(institutionSelector, worldParameters['Institución']);
+          console.log(`[ACTION] Institución ingresada: ${worldParameters['Institución']}`);
+      } else {
+          console.warn(`[WARN] No se encontró el valor de Institución, pasando al siguiente campo.`);
       }
+
+      // Validamos y llenamos "Especialidad"
+      if (worldParameters['Especialidad']) {
+          const specializationSelector = '#specializationSust';
+          await this.page.waitForSelector(specializationSelector, { timeout: 10000 });
+          await this.page.fill(specializationSelector, worldParameters['Especialidad']);
+          console.log(`[ACTION] Especialidad ingresada: ${worldParameters['Especialidad']}`);
+      } else {
+          console.warn(`[WARN] No se encontró el valor de Especialidad, pasando al siguiente campo.`);
+      }
+
+      // Validamos y llenamos "Descripción"
+      if (worldParameters['Descripción']) {
+          await this.page.waitForSelector('input[name="description"]', { timeout: 10000 });
+          await this.page.fill('input[name="description"]', worldParameters['Descripción']);
+          console.log(`[ACTION] Descripción ingresada: ${worldParameters['Descripción']}`);
+      } else {
+          console.warn(`[WARN] No se encontró el valor de Descripción.`);
+      }
+
+      // Validamos y llenamos "Ubicación"
+      if (worldParameters['Ubicación']) {
+          await this.page.waitForSelector('input[name="location"]', { timeout: 10000 });
+          await this.page.fill('input[name="location"]', worldParameters['Ubicación']);
+          console.log(`[ACTION] Ubicación ingresada: ${worldParameters['Ubicación']}`);
+      } else {
+          console.warn(`[WARN] No se encontró el valor de Ubicación.`);
+      }
+
+      const dateInputs = await this.page.$$('input[type="date"]');
+      if (dateInputs.length >= 2) {
+          if (worldParameters['Inicio']) {
+              await dateInputs[0].fill(worldParameters['Inicio']);
+              console.log(`[ACTION] Fecha de inicio ingresada: ${worldParameters['Inicio']}`);
+          } else {
+              console.warn(`[WARN] No se encontró el valor de Inicio.`);
+          }
+
+          if (worldParameters['Finalización']) {
+              await dateInputs[1].fill(worldParameters['Finalización']);
+              console.log(`[ACTION] Fecha de finalización ingresada: ${worldParameters['Finalización']}`);
+          } else {
+              console.warn(`[WARN] No se encontró el valor de Finalización.`);
+          }
+      } else {
+          console.error(`[ERROR] No se encontraron suficientes campos de fecha.`);
+      }
+
+      // Validamos y seleccionamos el checkbox "Actualmente vigente"
+      if (worldParameters['isCurrent'] && worldParameters['isCurrent']!= 'false') {
+          await this.page.waitForSelector('[name="isCurrent"]', { timeout: 10000 });
+          await this.page.check('[name="isCurrent"]');
+          console.log(`[ACTION] Checkbox 'Actualmente vigente' activado.`);
+      } else {
+          console.warn(`[WARN] No se encontró el valor de isCurrent.`);
+      }
+
   }
-  
-  await this.page.click(`xpath=${selectors.confirmarButton}`);
-  */
-  console.log(`[STEP END] Formulario enviado.`);
+  // Validamos y confirmamos el formulario
+  const submitButtonSelector = 'button[type="submit"]:has-text("Agregar")';
+  await this.page.waitForSelector(submitButtonSelector, { timeout: 10000 });
+  await this.page.click(submitButtonSelector);
+  console.log(`[ACTION] Click en botón "Agregar" para cerrar modal.`);
+
+  console.log(`[STEP END] Formulario completado.`);
 });
+
+
 
 Then('el modal se cierra', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Verificando cierre de modal.`);
-/*  
-  await this.page.waitForTimeout(2000);
-  if (!(await this.page.$(`xpath=${selectors.formulario}`))) {
-      console.log(`[STEP END] Modal cerrado.`);
-  } else {
-      console.error(`[ERROR] El modal sigue visible, posible error en envío.`);
-  }
-      */
+  // Esperamos 3 segundos antes de validar
+  await this.page.waitForTimeout(3000);
 });
 
 Then('se observa la sección agregada en su perfil', { timeout: 10000 }, async function () {
   console.log(`[STEP START] Validando que la sección se haya agregado.`);
   
-//  await this.page.waitForSelector(`xpath=${selectors.seccionAgregada}`, { timeout: 10000 });
+
   
   console.log(`[STEP END] Sección agregada exitosamente.`);
   await this.browser.close();
